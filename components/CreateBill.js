@@ -3,14 +3,14 @@ import { StyleSheet, Text, View, Button, TextInput } from 'react-native';
 import { StatusBar, StatusBarAnimation } from 'react-native';
 import { Route, MemoryRouter, Switch } from 'react-router';
 import { TouchableOpacity } from 'react-native';
-import { Header, Icon } from 'react-native-elements';
+import { Header, Icon, Form, FormInput } from 'react-native-elements';
 
 export const backSign = "<-Home";
 
 export default class CreateBill extends React.Component {
     render() {
         return (
-            <View style={{flex:1}}>
+            <View style={{ flex: 1 }}>
                 <Header
                     placement="left"
                     leftComponent={{ icon: 'home', color: '#fff', onPress: () => this.props.history.push('/') }}
@@ -18,10 +18,15 @@ export default class CreateBill extends React.Component {
                 />
 
                 <View style={styles.container}>
-                    <Text style={{ fontSize: 20 }}>Create a new bill</Text>
-                    <TextInput placeholder="Enter something" />
+
+                    <TextInput placeholder="Enter something"/>
+                    {/* <Form label="Personal Information">
+                        <FormInput />
+                        <FormInput />
+                    </Form> */}
+
                 </View>
-            </View>
+            </View >
         );
     }
 }

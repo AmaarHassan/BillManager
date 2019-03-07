@@ -12,11 +12,11 @@ export default class Home extends React.Component {
                     centerComponent={{ text: 'Home', style: { color: '#fff' } }}
                 />
 
-                <View style={styles.titleContainer}>
-                    <Text style={styles.title}> Manage Your Bills So You Can Save </Text>
-                </View>
+                <Image style={{marginTop:70}} source={require('../assets/BillManager_HomeScreen.png')} />
 
-                <Image source={require('../assets/BillManager_HomeScreen.png')} />
+                <View style={styles.textContainer}>
+                    <Text style={{color:'dodgerblue', textAlign:'center'}}> lorem ipsum jingo django espanyol luca modirc nu real madrid pay khoobsorat shhakar buzzinga </Text>
+                </View>
 
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity style={styles.button} onPress={()=>{this.props.history.push('/create')}}>
@@ -34,14 +34,13 @@ export default class Home extends React.Component {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1, margin: 0, padding: 0 
+        flex: 1, margin: 0, padding: 0, alignItems:'center'
     },
-    titleContainer: {
-        height: 80,
+    textContainer: {
+        width: 200,
         backgroundColor: 'white',
         color: 'dodgerblue',
-        alignItems: 'center',
-        justifyContent: 'center',
+        textAlign:'center'
     },
     buttonContainer: {
         flex: 1,
@@ -58,6 +57,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#DDDDDD',
         padding: 10,
         borderRadius:20,
-        textAlign:'center'
+        textAlign:'center',
+        margin: 10
     }
 });
