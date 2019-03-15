@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, StyleSheet, Text, View, FlatList } from 'react-native';
+import { Platform, BackHandler, StyleSheet, Picker, View, FlatList,Text, ActivityIndicator } from 'react-native';
 import { Header } from 'react-native-elements';
 
 import { graphql } from 'react-apollo';
@@ -17,33 +17,70 @@ class BillsList extends React.Component<any, any>  {
         };
         this.displayBills = this.displayBills.bind(this);
     }
+    componentWillMount() {
+        BackHandler.addEventListener('hardwareBackPress', this.handleBackButtonClick);
+    }
+    componentWillUnMount() {
+        BackHandler.removeEventListener('hardwareBackPress', this.handleBackButtonClick);
+    }
+    handleBackButtonClick = () => {
+        this.props.history.push('/');
+        return true;
+    }
     displayBills = () => {
         const data = this.props.data;
         if (data.loading) {
             return (
-                <Text> Loading Bills ... Empty your pockets now! </Text>
+                <ActivityIndicator size="large" color="#0000ff" />
             );
-        } else {
-            return (
-                <FlatList numColumns={this.state.columns}
-                data={this.props.data.bills}
-                renderItem={({ item }) => {
-                  return (
-                    <Bill id={item.id} bill={item} />
-                  );
-                }}
-                keyExtractor={(item, index) => index}
-              />                
+        } 
+        else if(data.error){
+            return(
+                <Text> Error Occured : {data.error} </Text>
+            );
+        }else if(data.empty){
+            return(
+                <Text> No Data Found {data.empty}</Text>
+            );
+        }
+        else {
+            return ( 
+                <FlatList
+                key={this.state.columns}
+                numColumns={this.state.columns}
+                    data={this.props.data.bills}
+                    renderItem={({ item }) => {
+                        return (
+                            <Bill id={item.id} bill={item} />
+                        );
+                    }}
+                    keyExtractor={(item, index) => index.toString()}
+                />
             )
         }
     }
+    renderSearch = () => {
+        return (
+            <View style={{ width: 100 }}>
+                <Picker selectedValue={this.state.columns} onValueChange={(itemValue) =>
+                    this.setState({ columns: itemValue })
+                }>
+                    <Picker.Item label="1" value={1} />
+                    <Picker.Item label="2" value={2} />
+                    <Picker.Item label="3" value={3} />
+                    <Picker.Item label="4" value={4} />
+                </Picker>
+            </View>
+        )
+    }
     render() {
         return (
-            <View style={{flex:1}}>
+            <View style={{ flex: 1 }}>
                 <Header
                     placement="left"
                     leftComponent={{ icon: 'home', color: '#fff', onPress: () => this.props.history.push('/') }}
                     centerComponent={{ text: 'Bills', style: { color: '#fff' } }}
+                    rightComponent={this.renderSearch()}
                 />
                 <View style={styles.container}>
                     {this.displayBills()}
@@ -59,7 +96,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: '#ecf0f1',
         padding: 8
-    },
+    }
 });
 
 export default graphql(getBillsQuery)(BillsList)

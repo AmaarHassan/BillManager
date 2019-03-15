@@ -1,11 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, View, Button, TextInput, Picker, Alert, AppRegistry } from 'react-native';
+import { StyleSheet, Text, View, Button, TextInput, Picker, Alert, AppRegistry, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { compose, graphql, Mutation } from 'react-apollo';
 import gql from 'graphql-tag';
-import { Route, MemoryRouter, Switch } from 'react-router';
-import { TouchableOpacity } from 'react-native';
 import { Header, Icon } from 'react-native-elements';
-
+import { BackHandler } from 'react-native';
 import Asset from './interfaces/IBill';
 //import mutation query from queries
 import { getBillsQuery } from './queries/queries';
@@ -36,11 +34,31 @@ export default class CreateBill extends React.Component<any, any>  {
             month: "January",
             unitRate: 0.0,
             unitsConsumed: 0.0,
-            response: "",
-            assets: [{ device: "", company: "", power: 0 }]
-        }
-    }  
+            assets: [{ device: "", company: "", power: 0 }],
 
+            response: null,
+        }
+    }
+    componentWillMount() {
+        BackHandler.addEventListener('hardwareBackPress', this.handleBackButtonClick);
+    }
+    componentWillUnMount() {
+        BackHandler.removeEventListener('hardwareBackPress', this.handleBackButtonClick);
+    }
+    resetState = () => {
+        this.setState({
+            title: '',
+            site: '',
+            month: '',
+            unitRate: 0,
+            unitsConsumed: 0,
+            assets: [{ device: '', company: '', power: 0 }]
+        })
+    }
+    handleBackButtonClick = () => {
+        this.props.history.push('/');
+        return true;
+    }
     handleAssetDeviceChange(i: number, text: string) {
         let newAssets = [...this.state.assets];
         newAssets[i].device = text;
@@ -87,8 +105,24 @@ export default class CreateBill extends React.Component<any, any>  {
         const backSign: String = "<-Home";
         return (
             <Mutation mutation={addBill} refetchQueries={[{ query: getBillsQuery }]}>
-                {(addBillMutation, { data }) => (
+                {(addBillMutation, { data, loading, error }) => (
                     <View style={{ flex: 1 }}>
+                        {/* add or remove contents based on loading and error response from mutation  */}
+                        {loading && (
+                            <View style={styles.mutationResponse}>
+                                <ActivityIndicator
+                                    style={{ height: 80 }}
+                                    color="#C00"
+                                    size="large"
+                                />
+                            </View>
+                        )}
+                        {error && (
+                            console.log('error '+error)
+                        )}
+                        {this.state.response && (
+                            console.log('bill saved successfully')
+                        )}
                         <Header
                             placement="left"
                             leftComponent={{ icon: 'home', color: '#fff', onPress: () => this.props.history.push('/') }}
@@ -99,7 +133,7 @@ export default class CreateBill extends React.Component<any, any>  {
                             <View>
                                 <Text style={styles.fieldTitle}> Bill Name </Text>
                                 <View style={{ flexDirection: 'row', padding: 0, margin: 0 }}>
-                                    <Icon raised name='heartbeat' type='font-awesome' color='#f50' />
+                                    <Icon name='heartbeat' type='font-awesome' color='#f50' />
                                     <View style={styles.fieldContainer}>
                                         <TextInput style={styles.field}
                                             onChangeText={(text) => { this.setState({ title: text }) }}
@@ -112,7 +146,7 @@ export default class CreateBill extends React.Component<any, any>  {
                                 <View style={{ marginTop: 20 }}>
                                     <Text style={styles.fieldTitle}> Site </Text>
                                     <View style={{ flexDirection: 'row' }}>
-                                        <Icon raised name='heartbeat' type='font-awesome' color='#f50' />
+                                        <Icon name='heartbeat' type='font-awesome' color='#f50' />
                                         <View style={{ width: 100 }}>
                                             <Picker selectedValue={this.state.site} onValueChange={(itemValue, itemIndex) =>
                                                 this.setState({ site: itemValue })
@@ -151,7 +185,7 @@ export default class CreateBill extends React.Component<any, any>  {
 
                             <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', marginTop: 20 }}>
                                 <View style={{ flexDirection: 'row' }}>
-                                    <Icon raised name='heartbeat' type='font-awesome' color='#f50' />
+                                    <Icon  name='heartbeat' type='font-awesome' color='#f50' />
                                     <View style={{ borderBottomColor: 'dodgerblue', borderBottomWidth: 1 }}>
                                         <TextInput placeholder="Unit Rate"
                                             onChangeText={(text) => { this.setState({ unitRate: parseFloat(text) }) }}
@@ -160,11 +194,11 @@ export default class CreateBill extends React.Component<any, any>  {
                                     </View>
                                 </View>
                                 <View style={{ flexDirection: 'row' }}>
-                                    <Icon raised name='heartbeat' type='font-awesome' color='#f50' />
+                                    <Icon  name='heartbeat' type='font-awesome' color='#f50' />
                                     <View style={{ borderBottomColor: 'dodgerblue', borderBottomWidth: 1 }}>
                                         <TextInput placeholder="Units Consumed"
                                             keyboardType='numeric'
-                                            onChangeText={(text) => { this.setState({ unitsConsumed: parseFloat(text) }) }} 
+                                            onChangeText={(text) => { this.setState({ unitsConsumed: parseFloat(text) }) }}
                                         />
                                     </View>
                                 </View>
@@ -217,14 +251,19 @@ export default class CreateBill extends React.Component<any, any>  {
                                     unitsConsumed: this.state.unitsConsumed,
                                     assets: this.state.assets
                                 }
-                            }).then(res => this.setState({ response: JSON.stringify(res) }))
-                                .catch(err => this.setState({ response: JSON.stringify(err) }));
+                            }).then(res => {
+                                this.setState({
+                                    response: "Record Added"
+                                });
+                                this.resetState();
+                            }
+                            ).catch(err => this.setState({ response: JSON.stringify(err) }));
                         }}>
-                        <View style={{alignItems:'center', alignText: 'center'}}>
-                            <Text style={{ color: 'dodgerblue', fontSize: 18 }}> Next </Text>
-                        </View>
+                            <View style={{ alignItems: 'center', alignText: 'center' }}>
+                                <Text style={{ color: 'dodgerblue', fontSize: 18 }}> Next </Text>
+                            </View>
                         </TouchableOpacity>
-                        <Text>{this.state.response}</Text>
+
                     </View >
 
                 )}
@@ -290,4 +329,11 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         width: 40, height: 40,
     },
+    mutationResponse: {
+        backgroundColor:'lightgray',
+        borderRadius: 10,
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        justifyContent: 'center'
+    }
 });

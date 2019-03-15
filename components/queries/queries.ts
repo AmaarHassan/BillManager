@@ -2,12 +2,6 @@ import  gql  from 'graphql-tag';
 import { graphql } from 'react-apollo';
 import {  Mutation } from 'react-apollo';
 
-// interface Asset {
-//     device: String
-//     company: String
-//     power: String
-// }
-
 const getBillsQuery = gql`
     {
         bills{
@@ -50,7 +44,7 @@ const addBillMutation = gql`
 //         $month: String!, 
 //         $unitRate: Float,
 //         $unitsConsumed: Float,
-//         $assets: [Asset]){
+//         $assets: Json){
 //         addBill(title: $title, site: $site, month: $month, unitRate: $unitRate, unitsConsumed:$unitsConsumed, assets:$assets){
 //             title
 //             id

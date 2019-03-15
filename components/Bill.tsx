@@ -43,7 +43,6 @@ export default class Bill extends React.Component<any, any>  {
             >
                 <Modal
                     animationType="slide"
-                    animationIn={'zoomInDown'}
                     animationOut={'zoomOutUp'}
                     animationInTiming={500}
                     animationOutTiming={500}
@@ -77,7 +76,7 @@ export default class Bill extends React.Component<any, any>  {
 
                     <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
                         <Icon name='watch' color='#00aced' />
-                        <Text>{this.props.bill.month}</Text>
+                        <Text style={{flex: 1, flexWrap: 'wrap'}}>{this.props.bill.month}</Text>
                     </View>
 
                 </View>

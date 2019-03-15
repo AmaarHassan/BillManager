@@ -1,9 +1,8 @@
 import React from 'react';
-import {Component} from 'react';
+import { Component } from 'react';
 import { StyleSheet, Text, View, Button } from 'react-native';
-import {Route, MemoryRouter, Switch} from 'react-router';
+import { Route, MemoryRouter, Switch } from 'react-router';
 
-import { AppRegistry } from 'react-native';
 import { ApolloClient, HttpLink, InMemoryCache } from 'apollo-boost';
 import { ApolloProvider } from 'react-apollo';
 
@@ -18,20 +17,20 @@ const client = new ApolloClient({
   }),
   cache: new InMemoryCache()
 });
-  
+
 
 export default class App extends React.Component {
   render() {
     return (
-  <ApolloProvider client={client}>
-    <MemoryRouter>
-        <Switch>
-          <Route exact path='/' component={Home}/>
-          <Route path='/create' component={CreateBill}/>
-          <Route path='/bills' component={BillsList}/>
-        </Switch>
-    </MemoryRouter> 
-  </ApolloProvider> 
+      <ApolloProvider client={client}>
+        <MemoryRouter>
+          <Switch>
+            <Route exact path='/' component={Home} />
+            <Route path='/create' component={CreateBill} />
+            <Route path='/bills' component={BillsList} />
+          </Switch>
+        </MemoryRouter>
+      </ApolloProvider>
     );
   }
 }
