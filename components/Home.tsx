@@ -19,12 +19,12 @@ export default class Home extends React.Component<any,any>  {
                 </View>
 
                 <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={()=>{this.props.history.push('/create')}}>
-                        <Text > Create </Text>
+                    <TouchableOpacity style={styles.button} onPress={()=>{this.props.history.push('/bills')}}>
+                        <Text > List </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.button} onPress={()=>{this.props.history.push('/create')} }>
-                        <Text> List </Text>
+                        <Text> Create </Text>
                     </TouchableOpacity>
                 </View>
             </View>
