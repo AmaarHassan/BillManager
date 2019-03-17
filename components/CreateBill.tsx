@@ -3,8 +3,8 @@ import {
     StyleSheet, Text, View, TextInput, Picker, TouchableOpacity, ScrollView, KeyboardAvoidingView
 } from 'react-native';
 import { Alert, ActivityIndicator } from 'react-native';
-import { compose, graphql, Mutation } from 'react-apollo';
-import { Header, Icon, Input } from 'react-native-elements';
+import { compose, graphql } from 'react-apollo';
+import { Header, Icon } from 'react-native-elements';
 import { BackHandler, Platform } from 'react-native';
 import Asset from './interfaces/IBill';
 //import mutation query from queries
