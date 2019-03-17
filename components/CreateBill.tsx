@@ -32,7 +32,7 @@ class CreateBill extends React.Component<any, any>  {
             month: "January",
             unitRate: 0.0,
             unitsConsumed: 0.0,
-            assets: [{ device: "", company: "", power: 0 }],
+            assets: [],
             loading: false,
             response: null,
         }
@@ -57,7 +57,7 @@ class CreateBill extends React.Component<any, any>  {
             month: "January",
             unitRate: 0,
             unitsConsumed: 0,
-            assets: [{ device: '', company: '', power: 0 }],
+            assets: [],
             loading: false,
             response: ''
         })
@@ -89,10 +89,9 @@ class CreateBill extends React.Component<any, any>  {
             assets: this.state.assets.filter((asset, assetIdx) => idx != assetIdx)
         });
     };
-    
+
     submitMutation = () => {
-        //to spin loader
-        this.props.mutate({
+        return this.props.mutate({
             variables: {
                 title: this.state.title,
                 site: this.state.site,
@@ -102,18 +101,9 @@ class CreateBill extends React.Component<any, any>  {
                 assets: this.state.assets
             },
             refetchQueries: [{ query: getBillsQuery }]
-        }).then(({ data }) => {
-            this.setState({ loading: false });
-            console.log('got data ', data);
-            this.setState({
-                response: "Record Added"
-            });
-            this.resetState();
-        }).catch((error) => {
-            this.setState({ loading: false });
-            console.log('there was an error sending the query', error);
-        });
+        })
     }
+
     _handleSubmit = async (values: any, bag: any) => {
         //setting values here, when form is already validated by yup in formika
         this.setState({
@@ -122,34 +112,28 @@ class CreateBill extends React.Component<any, any>  {
             unitsConsumed: parseFloat(values.unitsConsumed)
         });
         try {
-            this.setState({loading:true});
-            await this.props.mutate({
-                variables: {
-                    title: this.state.title,
-                    site: this.state.site,
-                    month: this.state.month,
-                    unitRate: this.state.unitRate,
-                    unitsConsumed: this.state.unitsConsumed,
-                    assets: this.state.assets
-                },
-                refetchQueries: [{ query: getBillsQuery }]
-            }).then(({ data }) => {
-                this.setState({ loading: false });
-                console.log('got data ', data);
-                this.setState({
-                    response: "Record Added"
+            //set loading to true before sending request
+            this.setState({ loading: true });
+            bag.setSubmitting(true);
+            await this.submitMutation()
+                .then(({ data }) => {
+                    this.setState({
+                        response: "Record Added",
+                        loading: false
+                    });
+                    // clear the form
+                    bag.resetForm();
+                    bag.setSubmitting(false);
+                    // clear the state
+                    this.resetState();
+                }).catch((error) => {
+                    this.setState({ loading: false });
+                    bag.setSubmitting(false);
                 });
-                this.resetState();
-            }).catch((error) => {
-                this.setState({ loading: false });
-                console.log('there was an error sending the query', error);
-            })
         } catch (error) {
-            this.setState({ loading: false });
             bag.setSubmitting(false);
             bag.setErrors(error);
         }
-        bag.setSubmitting(false);
     }
 
     renderForm = (formikProps) => {
@@ -171,7 +155,7 @@ class CreateBill extends React.Component<any, any>  {
                             <View style={{ flexDirection: 'row', padding: 0, margin: 0 }}>
                                 <Icon name='heartbeat' type='font-awesome' color='#f50' />
                                 <InputField
-                                    label="title"
+                                    label="Title"
                                     labelStyle={styles.fieldTitle}
                                     name="title"
                                     placeholder="title goes here"
@@ -203,7 +187,7 @@ class CreateBill extends React.Component<any, any>  {
                             <View style={{ marginTop: 20 }}>
                                 <Text style={styles.fieldTitle}> Month </Text>
                                 <View style={{ flexDirection: 'row' }}>
-                                    <Icon raised name='home' type='font-awesome' color='#dae' />
+                                    <Icon name='home' type='font-awesome' color='#dae' />
                                     <View style={{ width: 100 }}>
                                         <Picker selectedValue={this.state.month} onValueChange={(itemValue, itemIndex) =>
                                             this.setState({ month: itemValue })
@@ -259,7 +243,7 @@ class CreateBill extends React.Component<any, any>  {
                         </View>
 
                         <View style={{ justifyContent: 'center', alignItems: 'center', padding: 12 }}>
-                            {this.state.assets.map((asset, idx) => (
+                            {this.state.assets.length? this.state.assets.map((asset, idx) => (
                                 <View key={idx} style={{ flexDirection: 'row', padding: 5, justifyContent: 'space-between' }}>
                                     <Text>{`Asset #${idx + 1}`}</Text>
                                     <View style={styles.fieldContainer}>
@@ -286,7 +270,8 @@ class CreateBill extends React.Component<any, any>  {
                                         <Text style={{ color: 'white', fontSize: 16 }}>-</Text>
                                     </TouchableOpacity>
                                 </View>
-                            ))}
+                            ))
+                        : <Text style={styles.fieldTitle}> Tap to Add Assets </Text>}
                             <TouchableOpacity style={styles.addButton} onPress={() => { this.handleAddAsset() }}>
                                 <Text style={{ color: 'white', fontSize: 16 }}>+</Text>
                             </TouchableOpacity>
