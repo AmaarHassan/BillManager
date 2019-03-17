@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, FlatList, StyleSheet, Text, View, TouchableOpacity, TouchableHighlight } from 'react-native';
+import { Modal, FlatList, StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, TouchableHighlight } from 'react-native';
 import { Card, Icon } from "react-native-elements";
 
 import Asset from './interfaces/Asset';
@@ -15,76 +15,95 @@ export default class Bill extends React.Component<any, any>  {
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
     showAssets(assets:[Asset]) {
-        return (
-            <FlatList numColumns={1}
-                data={assets}
-                renderItem={({ item }) => {
-                    return (
-                        <View style={styles.modalInside}>
-                            <Text style={styles.description}> {item.device.toUpperCase()} </Text>
-                            <Text style={styles.description}> {item.company.toUpperCase()} </Text>
-                            <Text style={styles.description}> {item.power} </Text>
-                        </View>
-                    );
-                }}
-                keyExtractor={(item, index) => index.toString()}
-            />
-        )
+        if(assets.length>0){
+            return (
+                <FlatList numColumns={1}
+                    data={assets}
+                    renderItem={({ item }) => {
+                        return (
+                            <View style={styles.modalInside}>
+                                <Text style={styles.description}> {item.device.toUpperCase()} </Text>
+                                <Text style={styles.description}> {item.company.toUpperCase()} </Text>
+                                <Text style={styles.description}> {item.power} </Text>
+                            </View>
+                        );
+                    }}
+                    keyExtractor={(item, index) => index.toString()}
+                />
+            )
+        }else return(<Text>Nothing to show </Text>)
     }
     setModalVisible(visible: boolean) {
         this.setState({ modalVisible: visible });
     }
     render() {
-        return (
-            <Card
-                title={this.props.bill.title}
-                titleStyle={styles.titleStyle}
-                containerStyle={styles.card}
-            >
-                <Modal
-                    animationType="slide"
-                    animationOut={'zoomOutUp'}
-                    animationInTiming={500}
-                    animationOutTiming={500}
-                    transparent={true}
-                    visible={this.state.modalVisible}
-                    backdropOpacity={0.3}
-                    swipeDirection="left"
-                    onSwipe={() => { this.setModalVisible(!this.state.modalVisible) }}
-                    onBackdropPress={() => { this.setModalVisible(!this.state.modalVisible) }}
-                    onRequestClose={() => console.log('closed')}
-                >
-                    <TouchableOpacity
-                        style={styles.modalContainer}
-                        activeOpacity={1}
-                        onPressOut={() => { this.setModalVisible(!this.state.modalVisible) }}
-                    >
-                        <Text style={styles.modalTitle}> Assets </Text>
-                        {this.showAssets(this.props.bill.assets)}
-                        <Text style={{ color: 'dodgerblue' }}> Tap to Close </Text>
-                    </TouchableOpacity>
-                </Modal>
+        const data = this.props.bill;
+        if (data.loading) {
+            return (
+                <ActivityIndicator size="large" color="#0000ff" />
+            );
+        } else if (data.error) {
+            return (
                 <View>
-                    <TouchableOpacity onPress={() => { this.setModalVisible(!this.state.modalVisible); }} >
-                        <View style={{ backgroundColor: 'lightblue', padding: 5, height: 100 }}>
-                            <Text> Total Consumed </Text>
-                            <Text style={styles.billInfo}>
-                                {this.addCommas(this.props.bill.unitRate * this.props.bill.unitsConsumed)}
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-
-                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                        <Icon name='watch' color='#00aced' />
-                        <Text style={{flex: 1, flexWrap: 'wrap'}}>{this.props.bill.month}</Text>
-                    </View>
-
+                    <Text> Error + {data.error.toString()} </Text>
                 </View>
-            </Card>
-        );
+            );
+        } else if (data.empty) {
+            return (
+                <View>
+                    <Text> No Data Found + {data.empty.toString()}</Text>
+                </View>
+            )
+        } else {
+            return (
+                <Card
+                    title={this.props.bill.title.toString()}
+                    titleStyle={styles.titleStyle}
+                    containerStyle={styles.card}
+                >
+                    <Modal
+                        transparent={true}
+                        visible={this.state.modalVisible}
+                        backdropOpacity={0.3}
+                        swipeDirection="left"
+                        onSwipe={() => { this.setModalVisible(!this.state.modalVisible) }}
+                        onBackdropPress={() => { this.setModalVisible(!this.state.modalVisible) }}
+                        onRequestClose={() => console.log('closed')}
+                    >
+                        <TouchableOpacity
+                            style={styles.modalContainer}
+                            activeOpacity={1}
+                            onPressOut={() => { this.setModalVisible(!this.state.modalVisible) }}
+                        >
+                            <Text style={styles.modalTitle}> Assets </Text>
+                            <View>
+                                {this.showAssets(this.props.bill.assets)}
+                            </View>
+                            <Text style={{ color: 'dodgerblue' }}> Tap to Close </Text>
+                        </TouchableOpacity>
+                    </Modal>
+                    <View>
+                        <TouchableOpacity onPress={() => { this.setModalVisible(!this.state.modalVisible); }} >
+                            <View style={{ backgroundColor: 'lightblue', padding: 5, height: 100 }}>
+                                <Text> Total Consumed </Text>
+                                <Text style={styles.billInfo}>
+                                    {this.addCommas(this.props.bill.unitRate * this.props.bill.unitsConsumed).toString()}
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                            <Icon name='watch' color='#00aced' />
+                            <Text>{this.props.bill.month.toString()}</Text>
+                        </View>
+ 
+                    </View>
+                </Card>
+            );
+        }
     }
 }
-
+  
 const styles = StyleSheet.create({
     card: {
         margin: 15,
@@ -135,6 +154,6 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 20,
-        textAlign:'center',
+        textAlign: 'center',
     }
 });

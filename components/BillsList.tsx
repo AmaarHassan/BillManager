@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, BackHandler, StyleSheet, Picker, View, FlatList,Text, ActivityIndicator } from 'react-native';
+import { Platform, BackHandler, StyleSheet, Picker, View, FlatList, Text, ActivityIndicator } from 'react-native';
 import { Header } from 'react-native-elements';
 
 import { graphql } from 'react-apollo';
@@ -27,38 +27,6 @@ class BillsList extends React.Component<any, any>  {
         this.props.history.push('/');
         return true;
     }
-    displayBills = () => {
-        const data = this.props.data;
-        if (data.loading) {
-            return (
-                <ActivityIndicator size="large" color="#0000ff" />
-            );
-        } 
-        else if(data.error){
-            return(
-                <Text> Error Occured : {data.error} </Text>
-            );
-        }else if(data.empty){
-            return(
-                <Text> No Data Found {data.empty}</Text>
-            );
-        }
-        else {
-            return ( 
-                <FlatList
-                key={this.state.columns}
-                numColumns={this.state.columns}
-                    data={this.props.data.bills}
-                    renderItem={({ item }) => {
-                        return (
-                            <Bill id={item.id} bill={item} />
-                        );
-                    }}
-                    keyExtractor={(item, index) => index.toString()}
-                />
-            )
-        }
-    }
     renderSearch = () => {
         return (
             <View style={{ width: 100 }}>
@@ -73,6 +41,39 @@ class BillsList extends React.Component<any, any>  {
             </View>
         )
     }
+    displayBills = () => {
+        const data = this.props.data;
+        if (data.loading) {
+            return (
+                <ActivityIndicator size="large" color="#0000ff" />
+            )
+        }
+        else if (data.error) {
+            return (
+                    <Text> Error Occured  {data.error.toString()} </Text>
+            )
+        } else if (data.empty) {
+            return (
+                    <Text> No Data Found  {data.empty.toString()}</Text>
+            )
+        }
+        else { 
+            return (
+                <FlatList
+                    key={this.state.columns}
+                    numColumns={this.state.columns}
+                    data={this.props.data.bills}
+                    renderItem={({ item }) => {
+                        return (
+                            <Bill id={item.id} bill={item} />
+                        );
+                    }}
+                    keyExtractor={(item, index) => index.toString()}
+                />
+            )
+        }
+    }
+
     render() {
         return (
             <View style={{ flex: 1 }}>
