@@ -1,12 +1,18 @@
 import React from 'react';
-import { StyleSheet, Text, View, Button, TextInput, Picker, Alert, AppRegistry, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import {
+    StyleSheet, Text, View, TextInput, Picker, TouchableOpacity, ScrollView, KeyboardAvoidingView
+} from 'react-native';
+import { Alert, ActivityIndicator } from 'react-native';
 import { compose, graphql, Mutation } from 'react-apollo';
-import gql from 'graphql-tag';
-import { Header, Icon } from 'react-native-elements';
-import { BackHandler } from 'react-native';
+import { Header, Icon, Input } from 'react-native-elements';
+import { BackHandler, Platform } from 'react-native';
 import Asset from './interfaces/IBill';
 //import mutation query from queries
-import { getBillsQuery } from './queries/queries';
+import { getBillsQuery, addBillMutation } from './queries/queries';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
+import InputField from './input';
 
 export interface Props {
     history?: any
@@ -17,15 +23,7 @@ enum Site {
     Office
 }
 
-const addBill = gql`
-  mutation addBill($title: String, $site: String, $month: String, $unitRate: Float, $unitsConsumed: Float, $assets: Json) {
-    createBill(data: { title: $title, site: $site, month: $month, unitRate: $unitRate, unitsConsumed: $unitsConsumed, assets: $assets }) {
-      id
-    }
-  }
-`;
-
-export default class CreateBill extends React.Component<any, any>  {
+class CreateBill extends React.Component<any, any>  {
     constructor(props: any) {
         super(props);
         this.state = {
@@ -35,30 +33,36 @@ export default class CreateBill extends React.Component<any, any>  {
             unitRate: 0.0,
             unitsConsumed: 0.0,
             assets: [{ device: "", company: "", power: 0 }],
-
+            loading: false,
             response: null,
         }
+        this.submitMutation = this.submitMutation.bind(this);
     }
+    //hijacking back button to redirect to home
     componentWillMount() {
         BackHandler.addEventListener('hardwareBackPress', this.handleBackButtonClick);
     }
     componentWillUnMount() {
         BackHandler.removeEventListener('hardwareBackPress', this.handleBackButtonClick);
     }
-    resetState = () => {
-        this.setState({
-            title: '',
-            site: '',
-            month: '',
-            unitRate: 0,
-            unitsConsumed: 0,
-            assets: [{ device: '', company: '', power: 0 }]
-        })
-    }
     handleBackButtonClick = () => {
         this.props.history.push('/');
         return true;
     }
+    //resetting form values
+    resetState = () => {
+        this.setState({
+            title: '',
+            site: "Home",
+            month: "January",
+            unitRate: 0,
+            unitsConsumed: 0,
+            assets: [{ device: '', company: '', power: 0 }],
+            loading: false,
+            response: ''
+        })
+    }
+    //handling changes on assets' properties
     handleAssetDeviceChange(i: number, text: string) {
         let newAssets = [...this.state.assets];
         newAssets[i].device = text;
@@ -74,200 +78,275 @@ export default class CreateBill extends React.Component<any, any>  {
         newAssets[i].power = text;
         this.setState({ assets: newAssets });
     }
-
+    //adding and removing assets object(s)
     handleAddAsset = () => {
         this.setState({
             assets: this.state.assets.concat([{ device: "" }])
         });
     };
-
     handleRemoveAsset = (idx: number) => {
         this.setState({
             assets: this.state.assets.filter((asset, assetIdx) => idx != assetIdx)
         });
     };
+    
+    submitMutation = () => {
+        //to spin loader
+        this.props.mutate({
+            variables: {
+                title: this.state.title,
+                site: this.state.site,
+                month: this.state.month,
+                unitRate: this.state.unitRate,
+                unitsConsumed: this.state.unitsConsumed,
+                assets: this.state.assets
+            },
+            refetchQueries: [{ query: getBillsQuery }]
+        }).then(({ data }) => {
+            this.setState({ loading: false });
+            console.log('got data ', data);
+            this.setState({
+                response: "Record Added"
+            });
+            this.resetState();
+        }).catch((error) => {
+            this.setState({ loading: false });
+            console.log('there was an error sending the query', error);
+        });
+    }
+    _handleSubmit = async (values: any, bag: any) => {
+        //setting values here, when form is already validated by yup in formika
+        this.setState({
+            title: values.title,
+            unitRate: parseFloat(values.unitRate),
+            unitsConsumed: parseFloat(values.unitsConsumed)
+        });
+        try {
+            this.setState({loading:true});
+            await this.props.mutate({
+                variables: {
+                    title: this.state.title,
+                    site: this.state.site,
+                    month: this.state.month,
+                    unitRate: this.state.unitRate,
+                    unitsConsumed: this.state.unitsConsumed,
+                    assets: this.state.assets
+                },
+                refetchQueries: [{ query: getBillsQuery }]
+            }).then(({ data }) => {
+                this.setState({ loading: false });
+                console.log('got data ', data);
+                this.setState({
+                    response: "Record Added"
+                });
+                this.resetState();
+            }).catch((error) => {
+                this.setState({ loading: false });
+                console.log('there was an error sending the query', error);
+            })
+        } catch (error) {
+            this.setState({ loading: false });
+            bag.setSubmitting(false);
+            bag.setErrors(error);
+        }
+        bag.setSubmitting(false);
+    }
 
-    // handleSubmit = () => {
-    //     addBillMutation({
-    //         variables: {
-    //             title: this.state.title,
-    //             site: this.state.site,
-    //             month: this.state.month,
-    //             unitRate: this.state.unitRate,
-    //             unitsConsumed: this.state.unitsConsumed,
-    //             // assets: this.state.assets
-    //         }// in order to re-render the books list, we refresh its query
-    //     }).then(res => res)
-    //         .catch(err => <Text>{err}</Text>);
-    // };
+    renderForm = (formikProps) => {
+        const {
+            values, handleSubmit, setFieldValue, errors,
+            touched, setFieldTouched, isValid, isSubmitting
+        } = formikProps;
 
-    render() {
-        const backSign: String = "<-Home";
         return (
-            <Mutation mutation={addBill} refetchQueries={[{ query: getBillsQuery }]}>
-                {(addBillMutation, { data, loading, error }) => (
-                    <View style={{ flex: 1 }}>
-                        {/* add or remove contents based on loading and error response from mutation  */}
-                        {loading && (
-                            <View style={styles.mutationResponse}>
-                                <ActivityIndicator
-                                    style={{ height: 80 }}
-                                    color="#C00"
-                                    size="large"
+            <KeyboardAwareScrollView
+                enableOnAndroid
+                enableAutomaticScroll
+                keyboardOpeningTime={0}
+                extraHeight={Platform.select({ android: 200 })}
+            >
+                <React.Fragment>
+                    <View>
+                        <View>
+                            <View style={{ flexDirection: 'row', padding: 0, margin: 0 }}>
+                                <Icon name='heartbeat' type='font-awesome' color='#f50' />
+                                <InputField
+                                    label="title"
+                                    labelStyle={styles.fieldTitle}
+                                    name="title"
+                                    placeholder="title goes here"
+                                    value={values.title}
+                                    onChange={setFieldValue}
+                                    onTouch={setFieldTouched}
+                                    error={touched.title && errors.title}
                                 />
                             </View>
-                        )}
-                        {error && (
-                            console.log('error '+error)
-                        )}
-                        {this.state.response && (
-                            console.log('bill saved successfully')
-                        )}
-                        <Header
-                            placement="left"
-                            leftComponent={{ icon: 'home', color: '#fff', onPress: () => this.props.history.push('/') }}
-                            centerComponent={{ text: 'Create Bill', style: { color: '#fff' } }}
-                        />
-                        <View style={styles.container}>
+                        </View>
 
-                            <View>
-                                <Text style={styles.fieldTitle}> Bill Name </Text>
-                                <View style={{ flexDirection: 'row', padding: 0, margin: 0 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-evenly' }}>
+                            <View style={{ marginTop: 20 }}>
+                                <Text style={styles.fieldTitle}> Site </Text>
+                                <View style={{ flexDirection: 'row' }}>
                                     <Icon name='heartbeat' type='font-awesome' color='#f50' />
-                                    <View style={styles.fieldContainer}>
-                                        <TextInput style={styles.field}
-                                            onChangeText={(text) => { this.setState({ title: text }) }}
-                                            placeholder="Bill title goes here" />
+                                    <View style={{ width: 100 }}>
+                                        <Picker selectedValue={this.state.site} onValueChange={
+                                            (itemValue, itemIndex) => {
+                                                this.setState({ site: itemValue });
+                                            }
+                                        }>
+                                            <Picker.Item label="Home" value="Home" />
+                                            <Picker.Item label="Office" value="Office" />
+                                        </Picker>
                                     </View>
                                 </View>
                             </View>
-
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-evenly' }}>
-                                <View style={{ marginTop: 20 }}>
-                                    <Text style={styles.fieldTitle}> Site </Text>
-                                    <View style={{ flexDirection: 'row' }}>
-                                        <Icon name='heartbeat' type='font-awesome' color='#f50' />
-                                        <View style={{ width: 100 }}>
-                                            <Picker selectedValue={this.state.site} onValueChange={(itemValue, itemIndex) =>
-                                                this.setState({ site: itemValue })
-                                            }>
-                                                <Picker.Item label="Home" value="Home" />
-                                                <Picker.Item label="Office" value="Office" />
-                                            </Picker>
-                                        </View>
-                                    </View>
-                                </View>
-                                <View style={{ marginTop: 20 }}>
-                                    <Text style={styles.fieldTitle}> Month </Text>
-                                    <View style={{ flexDirection: 'row' }}>
-                                        <Icon raised name='home' type='font-awesome' color='#dae' />
-                                        <View style={{ width: 100 }}>
-                                            <Picker selectedValue={this.state.month} onValueChange={(itemValue, itemIndex) =>
-                                                this.setState({ month: itemValue })
-                                            }>
-                                                <Picker.Item label="January" value="January" />
-                                                <Picker.Item label="February" value="February" />
-                                                <Picker.Item label="March" value="March" />
-                                                <Picker.Item label="April" value="April" />
-                                                <Picker.Item label="May" value="May" />
-                                                <Picker.Item label="June" value="June" />
-                                                <Picker.Item label="July" value="July" />
-                                                <Picker.Item label="August" value="August" />
-                                                <Picker.Item label="September" value="September" />
-                                                <Picker.Item label="October" value="October" />
-                                                <Picker.Item label="November" value="November" />
-                                                <Picker.Item label="December" value="December" />
-                                            </Picker>
-                                        </View>
-                                    </View>
-                                </View>
-                            </View>
-
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', marginTop: 20 }}>
+                            <View style={{ marginTop: 20 }}>
+                                <Text style={styles.fieldTitle}> Month </Text>
                                 <View style={{ flexDirection: 'row' }}>
-                                    <Icon  name='heartbeat' type='font-awesome' color='#f50' />
-                                    <View style={{ borderBottomColor: 'dodgerblue', borderBottomWidth: 1 }}>
-                                        <TextInput placeholder="Unit Rate"
-                                            onChangeText={(text) => { this.setState({ unitRate: parseFloat(text) }) }}
-                                            keyboardType='numeric'
-                                        />
+                                    <Icon raised name='home' type='font-awesome' color='#dae' />
+                                    <View style={{ width: 100 }}>
+                                        <Picker selectedValue={this.state.month} onValueChange={(itemValue, itemIndex) =>
+                                            this.setState({ month: itemValue })
+                                        }>
+                                            <Picker.Item label="January" value="January" />
+                                            <Picker.Item label="February" value="February" />
+                                            <Picker.Item label="March" value="March" />
+                                            <Picker.Item label="April" value="April" />
+                                            <Picker.Item label="May" value="May" />
+                                            <Picker.Item label="June" value="June" />
+                                            <Picker.Item label="July" value="July" />
+                                            <Picker.Item label="August" value="August" />
+                                            <Picker.Item label="September" value="September" />
+                                            <Picker.Item label="October" value="October" />
+                                            <Picker.Item label="November" value="November" />
+                                            <Picker.Item label="December" value="December" />
+                                        </Picker>
                                     </View>
                                 </View>
-                                <View style={{ flexDirection: 'row' }}>
-                                    <Icon  name='heartbeat' type='font-awesome' color='#f50' />
-                                    <View style={{ borderBottomColor: 'dodgerblue', borderBottomWidth: 1 }}>
-                                        <TextInput placeholder="Units Consumed"
-                                            keyboardType='numeric'
-                                            onChangeText={(text) => { this.setState({ unitsConsumed: parseFloat(text) }) }}
-                                        />
-                                    </View>
-                                </View>
-
                             </View>
+                        </View>
 
-                            <View style={{ justifyContent: 'center', alignItems: 'center', padding: 12 }}>
-                                {this.state.assets.map((asset, idx) => (
-                                    <View key={idx} style={{ flexDirection: 'row', padding: 5, justifyContent: 'space-between' }}>
-                                        <Text>{`Asset #${idx + 1}`}</Text>
-                                        <View style={styles.fieldContainer}>
-                                            <TextInput
-                                                placeholder={`device`}
-                                                onChangeText={(text) => { this.handleAssetDeviceChange(idx, text) }}
-                                            />
-                                        </View>
-                                        <View style={styles.fieldContainer}>
-                                            <TextInput
-                                                placeholder={` company`}
-                                                onChangeText={(text) => { this.handleAssetCompanyChange(idx, text) }}
-                                            />
-                                        </View>
-                                        <View style={styles.fieldContainer}>
-                                            <TextInput
-                                                placeholder={` power`}
-                                                keyboardType='numeric'
-                                                onChangeText={(text) => { this.handleAssetPowerChange(idx, parseFloat(text)) }}
-                                            />
-                                        </View>
-
-                                        <TouchableOpacity style={styles.deleteButton} onPress={() => { this.handleRemoveAsset(idx) }}>
-                                            <Text style={{ color: 'white', fontSize: 16 }}>-</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
-                                <TouchableOpacity style={styles.addButton} onPress={() => { this.handleAddAsset() }}>
-                                    <Text style={{ color: 'white', fontSize: 16 }}>+</Text>
-                                </TouchableOpacity>
-
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 15, marginTop: 20 }}>
+                            <View style={{ flex: 1, flexDirection: 'row' }}>
+                                <Icon name='heartbeat' type='font-awesome' color='#f50' />
+                                <InputField
+                                    label="Unit Rate"
+                                    labelStyle={styles.fieldTitle}
+                                    name="unitRate"
+                                    keyboardType="numeric"
+                                    placeholder="Unit Rate"
+                                    value={values.unitRate}
+                                    onChange={setFieldValue}
+                                    onTouch={setFieldTouched}
+                                    error={touched.unitRate && errors.unitRate}
+                                />
+                            </View>
+                            <View style={{ flex: 1, flexDirection: 'row' }}>
+                                <Icon name='heartbeat' type='font-awesome' color='#f50' />
+                                <InputField
+                                    label="Units Consumed"
+                                    labelStyle={styles.fieldTitle}
+                                    name="unitsConsumed"
+                                    keyboardType="numeric"
+                                    placeholder="Units Consumed"
+                                    value={values.unitsConsumed}
+                                    onChange={setFieldValue}
+                                    onTouch={setFieldTouched}
+                                    error={touched.unitsConsumed && errors.unitsConsumed}
+                                />
                             </View>
 
                         </View>
-                        <TouchableOpacity onPress={() => {
-                            addBillMutation({
-                                variables: {
-                                    title: this.state.title,
-                                    site: this.state.site,
-                                    month: this.state.month,
-                                    unitRate: this.state.unitRate,
-                                    unitsConsumed: this.state.unitsConsumed,
-                                    assets: this.state.assets
-                                }
-                            }).then(res => {
-                                this.setState({
-                                    response: "Record Added"
-                                });
-                                this.resetState();
-                            }
-                            ).catch(err => this.setState({ response: JSON.stringify(err) }));
-                        }}>
-                            <View style={{ alignItems: 'center', alignText: 'center' }}>
-                                <Text style={{ color: 'dodgerblue', fontSize: 18 }}> Next </Text>
-                            </View>
-                        </TouchableOpacity>
 
-                    </View >
+                        <View style={{ justifyContent: 'center', alignItems: 'center', padding: 12 }}>
+                            {this.state.assets.map((asset, idx) => (
+                                <View key={idx} style={{ flexDirection: 'row', padding: 5, justifyContent: 'space-between' }}>
+                                    <Text>{`Asset #${idx + 1}`}</Text>
+                                    <View style={styles.fieldContainer}>
+                                        <TextInput
+                                            placeholder={`device`}
+                                            onChangeText={(text) => { this.handleAssetDeviceChange(idx, text) }}
+                                        />
+                                    </View>
+                                    <View style={styles.fieldContainer}>
+                                        <TextInput
+                                            placeholder={` company`}
+                                            onChangeText={(text) => { this.handleAssetCompanyChange(idx, text) }}
+                                        />
+                                    </View>
+                                    <View style={styles.fieldContainer}>
+                                        <TextInput
+                                            placeholder={` power`}
+                                            keyboardType='numeric'
+                                            onChangeText={(text) => { this.handleAssetPowerChange(idx, parseFloat(text)) }}
+                                        />
+                                    </View>
 
+                                    <TouchableOpacity style={styles.deleteButton} onPress={() => { this.handleRemoveAsset(idx) }}>
+                                        <Text style={{ color: 'white', fontSize: 16 }}>-</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                            <TouchableOpacity style={styles.addButton} onPress={() => { this.handleAddAsset() }}>
+                                <Text style={{ color: 'white', fontSize: 16 }}>+</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={{ justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+                            <TouchableOpacity style={(!isValid || isSubmitting) ? styles.disabledButton : styles.button}
+                                disabled={!isValid || isSubmitting}
+                                onPress={handleSubmit} >
+                                <Text style={{ color: (!isValid || isSubmitting) ? 'darkgray' : 'white' }}> Next </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </React.Fragment>
+            </KeyboardAwareScrollView>
+        );
+    }
+    render() {
+        const backSign: String = "<-Home";
+        return (
+            <View style={{ flex: 1 }}>
+                {/* add or remove contents based on loading and error response from mutation  */}
+                {this.state.loading && (
+                    <View style={styles.mutationResponse}>
+                        <ActivityIndicator
+                            style={{ height: 80 }}
+                            color="#C00"
+                            size="large"
+                        />
+                    </View>
                 )}
-            </Mutation>
+                <Header placement="left"
+                    leftComponent={{ icon: 'home', color: '#fff', onPress: () => this.props.history.push('/') }}
+                    centerComponent={{ text: 'Create Bill', style: { color: '#fff' } }}
+                />
+
+                <View style={styles.container}>
+
+                    <Formik
+                        initialValues={{ title: '', site: '', unitRate: 0, unitsConsumed: 0 }}
+                        onSubmit={this._handleSubmit}
+                        render={this.renderForm}
+                        validationSchema={Yup.object().shape({
+                            title: Yup
+                                .string()
+                                .required('title is required'),
+                            unitRate: Yup
+                                .number()
+                                .positive()
+                                .required('required'),
+                            unitsConsumed: Yup
+                                .number()
+                                .positive()
+                                .required('required')
+                        })}
+                    >
+
+                    </Formik>
+                </View>
+            </View>
         );
     }
 }
@@ -278,11 +357,22 @@ const styles = StyleSheet.create({
         margin: 10,
     },
     button: {
+        width: 120,
+        alignItems: 'center',
+        backgroundColor: 'dodgerblue',
+        padding: 10,
+        borderRadius: 20,
+        textAlign: 'center',
+        margin: 10
+    },
+    disabledButton: {
+        width: 120,
         alignItems: 'center',
         backgroundColor: '#DDDDDD',
         padding: 10,
-        width: 100,
-        color: 'white',
+        borderRadius: 20,
+        textAlign: 'center',
+        margin: 10
     },
     fieldContainer: {
         borderBottomColor: 'dodgerblue',
@@ -292,7 +382,6 @@ const styles = StyleSheet.create({
     fieldTitle: {
         fontSize: 10,
         color: 'dodgerblue',
-        marginLeft: 60,
     },
     field: {
         height: 60,
@@ -330,10 +419,12 @@ const styles = StyleSheet.create({
         width: 40, height: 40,
     },
     mutationResponse: {
-        backgroundColor:'lightgray',
+        backgroundColor: 'lightgray',
         borderRadius: 10,
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
         justifyContent: 'center'
     }
 });
+
+export default graphql(addBillMutation)(CreateBill);
