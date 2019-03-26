@@ -1,19 +1,19 @@
 import React from 'react';
 import { Platform, BackHandler, StyleSheet, Picker, View, FlatList, Text, ActivityIndicator } from 'react-native';
-import { Header } from 'react-native-elements';
+// import { Header } from 'react-native-elements';
 
 import { graphql } from 'react-apollo';
 import { getBillsQuery } from './queries/queries';
 
 import Bill from './Bill';
 import IBill from './interfaces/IBill';
-
+import Header from './header';
 
 class BillsList extends React.Component<any, any>  {
     constructor(props: any) {
         super(props);
         this.state = {
-            columns: (Platform.OS == 'android') ? 2 : 3,
+            columns: (Platform.OS == 'android' || Platform.OS=="ios") ? 2 : 5,
         };
         this.displayBills = this.displayBills.bind(this);
     }
@@ -29,7 +29,7 @@ class BillsList extends React.Component<any, any>  {
     }
     renderSearch = () => {
         return (
-            <View style={{ width: 100 }}>
+            <View style={{ width: 60 }}>
                 <Picker selectedValue={this.state.columns} onValueChange={(itemValue) =>
                     this.setState({ columns: itemValue })
                 }>
@@ -50,14 +50,14 @@ class BillsList extends React.Component<any, any>  {
         }
         else if (data.error) {
             return (
-                    <Text> Error Occured  {data.error.toString()} </Text>
+                <Text> Error Occured  {data.error.toString()} </Text>
             )
         } else if (data.empty) {
             return (
-                    <Text> No Data Found  {data.empty.toString()}</Text>
+                <Text> No Data Found  {data.empty.toString()}</Text>
             )
         }
-        else { 
+        else {
             return (
                 <FlatList
                     key={this.state.columns}
@@ -65,7 +65,7 @@ class BillsList extends React.Component<any, any>  {
                     data={this.props.data.bills}
                     renderItem={({ item }) => {
                         return (
-                            <Bill id={item.id} bill={item} />
+                            <Bill key={item.id} id={item.id} bill={item} />
                         );
                     }}
                     keyExtractor={(item, index) => index.toString()}
@@ -77,12 +77,7 @@ class BillsList extends React.Component<any, any>  {
     render() {
         return (
             <View style={{ flex: 1 }}>
-                <Header
-                    placement="left"
-                    leftComponent={{ icon: 'home', color: '#fff', onPress: () => this.props.history.push('/') }}
-                    centerComponent={{ text: 'Bills', style: { color: '#fff' } }}
-                    rightComponent={this.renderSearch()}
-                />
+               <Header/>
                 <View style={styles.container}>
                     {this.displayBills()}
                 </View>
@@ -96,7 +91,8 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         backgroundColor: '#ecf0f1',
-        padding: 8
+        padding: 8,
+        width:'100%'
     }
 });
 

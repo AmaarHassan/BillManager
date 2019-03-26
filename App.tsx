@@ -2,7 +2,6 @@ import React from 'react';
 import { Component } from 'react';
 import { StyleSheet, Text, View, Button } from 'react-native';
 import { Route, MemoryRouter, Switch } from 'react-router';
-
 import { ApolloClient, HttpLink, InMemoryCache } from 'apollo-boost';
 import { ApolloProvider } from 'react-apollo';
 

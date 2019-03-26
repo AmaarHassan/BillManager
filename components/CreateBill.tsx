@@ -3,16 +3,17 @@ import {
     StyleSheet, Text, View, TextInput, Picker, TouchableOpacity, ScrollView, KeyboardAvoidingView
 } from 'react-native';
 import { Alert, ActivityIndicator } from 'react-native';
+//import { Header, Icon, Input, Divider } from 'react-native-elements';
+
 import { compose, graphql } from 'react-apollo';
-import { Header, Icon, Input } from 'react-native-elements';
 import { BackHandler, Platform } from 'react-native';
 import Asset from './interfaces/IBill';
+import Header from './header';
 //import mutation query from queries
 import { getBillsQuery, addBillMutation } from './queries/queries';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+//import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import InputField from './input';
 
 export interface Props {
     history?: any
@@ -138,161 +139,180 @@ class CreateBill extends React.Component<any, any>  {
 
     renderForm = (formikProps) => {
         const {
-            values, handleSubmit, setFieldValue, errors,
+            values, handleSubmit, handleChange, setFieldValue, errors,
             touched, setFieldTouched, isValid, isSubmitting
         } = formikProps;
 
         return (
-            <KeyboardAwareScrollView
-                enableOnAndroid
-                enableAutomaticScroll
-                keyboardOpeningTime={0}
-                extraHeight={Platform.select({ android: 200 })}
-            >
-                <React.Fragment>
-                    <View>
+            <View style={{ flex: 1 }}>
+                <KeyboardAvoidingView
+                    behavior="position"
+                    enabled={true}
+                >
+                    <React.Fragment>
                         <View>
-                            <View style={{ flexDirection: 'row', padding: 0, margin: 0 }}>
-                                <Icon name='heartbeat' type='font-awesome' color='#f50' />
-                                <InputField
-                                    label="Title"
-                                    labelStyle={styles.fieldTitle}
-                                    name="title"
-                                    placeholder="title goes here"
-                                    value={values.title}
-                                    onChange={setFieldValue}
-                                    onTouch={setFieldTouched}
-                                    error={touched.title && errors.title}
-                                />
+                            <View style={styles.titleContainer}>
+                                <Text style={styles.title}> Create Bill </Text>
+                                <View style={{ height: 10 }}></View>
                             </View>
-                        </View>
+                            {/* first row of title */}
+                            <View style={{justifyContent: Platform.OS=="web"?'space-evenly':'space-between'}}>
+                                <View>
+                                    <Text style={styles.fieldTitle}> Title * </Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', padding: Platform.OS=="web"?10:1}}>
+                                    <Text>Icon</Text>
+                                    <TextInput placeholder="title goes here"
+                                        onChangeText={handleChange('title')}
+                                    />
+                                </View>
+                                <Text style={styles.textInfo}>Required</Text>
+                            </View>
 
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-evenly' }}>
-                            <View style={{ marginTop: 20 }}>
-                                <Text style={styles.fieldTitle}> Site </Text>
-                                <View style={{ flexDirection: 'row' }}>
-                                    <Icon name='heartbeat' type='font-awesome' color='#f50' />
-                                    <View style={{ width: 100 }}>
-                                        <Picker selectedValue={this.state.site} onValueChange={
-                                            (itemValue, itemIndex) => {
-                                                this.setState({ site: itemValue });
-                                            }
-                                        }>
-                                            <Picker.Item label="Home" value="Home" />
-                                            <Picker.Item label="Office" value="Office" />
-                                        </Picker>
+                            {/* second row of form fileds: Pickers for Site and Month */}
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                                <View style={{ marginTop: 20 }}>
+                                    <View>
+                                        <View>
+                                            <Text style={styles.fieldTitle}> Site * </Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', padding: 0, margin: 0, alignItems: 'center' }}>
+                                            <Text> Icon </Text>
+                                            <View style={{ width: 110 }}>
+                                                <Picker selectedValue={this.state.site} onValueChange={
+                                                    (itemValue, itemIndex) => {
+                                                        this.setState({ site: itemValue });
+                                                    }
+                                                }>
+                                                    <Picker.Item label="Home" value="Home" />
+                                                    <Picker.Item label="Office" value="Office" />
+                                                </Picker>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </View>
+
+                                <View style={{ marginTop: 20 }}>
+                                    <View>
+                                        <View>
+                                            <Text style={styles.fieldTitle}> Month * </Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', padding: 0, margin: 0, alignItems: 'center' }}>
+                                            <Text>Icon</Text>
+                                            <View style={{ width: 130 }}>
+                                                <Picker selectedValue={this.state.month} onValueChange={(itemValue, itemIndex) =>
+                                                    this.setState({ month: itemValue })
+                                                }>
+                                                    <Picker.Item label="January" value="January" />
+                                                    <Picker.Item label="February" value="February" />
+                                                    <Picker.Item label="March" value="March" />
+                                                    <Picker.Item label="April" value="April" />
+                                                    <Picker.Item label="May" value="May" />
+                                                    <Picker.Item label="June" value="June" />
+                                                    <Picker.Item label="July" value="July" />
+                                                    <Picker.Item label="August" value="August" />
+                                                    <Picker.Item label="September" value="September" />
+                                                    <Picker.Item label="October" value="October" />
+                                                    <Picker.Item label="November" value="November" />
+                                                    <Picker.Item label="December" value="December" />
+                                                </Picker>
+                                            </View>
+                                        </View>
                                     </View>
                                 </View>
                             </View>
-                            <View style={{ marginTop: 20 }}>
-                                <Text style={styles.fieldTitle}> Month </Text>
-                                <View style={{ flexDirection: 'row' }}>
-                                    <Icon name='home' type='font-awesome' color='#dae' />
-                                    <View style={{ width: 100 }}>
-                                        <Picker selectedValue={this.state.month} onValueChange={(itemValue, itemIndex) =>
-                                            this.setState({ month: itemValue })
-                                        }>
-                                            <Picker.Item label="January" value="January" />
-                                            <Picker.Item label="February" value="February" />
-                                            <Picker.Item label="March" value="March" />
-                                            <Picker.Item label="April" value="April" />
-                                            <Picker.Item label="May" value="May" />
-                                            <Picker.Item label="June" value="June" />
-                                            <Picker.Item label="July" value="July" />
-                                            <Picker.Item label="August" value="August" />
-                                            <Picker.Item label="September" value="September" />
-                                            <Picker.Item label="October" value="October" />
-                                            <Picker.Item label="November" value="November" />
-                                            <Picker.Item label="December" value="December" />
-                                        </Picker>
+
+                            {/* Third row of unit rate and units consumed */}
+
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                                <View style={{ marginTop: 20 }}>
+                                    <View>
+                                        <View>
+                                            <Text style={styles.fieldTitle}> Unit Rate * </Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', padding: 0, margin: 0, alignItems: 'center' }}>
+                                            <Text>Icon</Text>
+                                            <View style={{ width: 110 }}>
+                                                <TextInput placeholder="unit rate"
+                                                    onChangeText={handleChange('unitRate')}
+                                                />
+                                            </View>
+                                        </View>
+                                    </View>
+                                </View>
+
+                                <View style={{ marginTop: 20 }}>
+                                    <View>
+                                        <View>
+                                            <Text style={styles.fieldTitle}> Units Consumed * </Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', padding: 0, margin: 0, alignItems: 'center'}}>
+                                            <Text></Text>
+                                            <View style={{ width: 130 }}>
+                                                <TextInput placeholder="units consumed"
+                                                    onChangeText={handleChange('unitsConsumed')}
+                                                />
+                                            </View>
+                                        </View>
                                     </View>
                                 </View>
                             </View>
-                        </View>
 
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 15, marginTop: 20 }}>
-                            <View style={{ flex: 1, flexDirection: 'row' }}>
-                                <Icon name='heartbeat' type='font-awesome' color='#f50' />
-                                <InputField
-                                    label="Unit Rate"
-                                    labelStyle={styles.fieldTitle}
-                                    name="unitRate"
-                                    keyboardType="numeric"
-                                    placeholder="Unit Rate"
-                                    value={values.unitRate}
-                                    onChange={setFieldValue}
-                                    onTouch={setFieldTouched}
-                                    error={touched.unitRate && errors.unitRate}
-                                />
+                            {/* third row of dynamimc assets */}
+                            <View style={{ alignItems: 'center', marginTop: 20 }}>
+                                {this.state.assets.length ? this.state.assets.map((asset, idx) => (
+                                    <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, padding: 5 }}>
+                                        <Text style={{ color: '#39F' }}>{`Asset #${idx + 1}`}</Text>
+                                        <View style={styles.assetField}>
+                                            <TextInput
+                                                placeholder={`device`}
+                                                onChangeText={(text) => { this.handleAssetDeviceChange(idx, text) }}
+                                            />
+                                        </View>
+                                        <View style={styles.assetField}>
+                                            <TextInput
+                                                placeholder={` company`}
+                                                onChangeText={(text) => { this.handleAssetCompanyChange(idx, text) }}
+                                            />
+                                        </View>
+                                        <View style={styles.assetField}>
+                                            <TextInput
+                                                placeholder={` power`}
+                                                keyboardType='numeric'
+                                                onChangeText={(text) => { this.handleAssetPowerChange(idx, parseFloat(text)) }}
+                                            />
+                                        </View>
+
+                                        <TouchableOpacity style={styles.deleteButton} onPress={() => { this.handleRemoveAsset(idx) }}>
+                                            <Text style={{ color: 'white', fontSize: 16 }}>-</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                ))
+                                    : <Text style={styles.assetPrompt}>Tap to Add Assets</Text> //else show text
+                                }
+                                <TouchableOpacity style={styles.addButton} onPress={() => { this.handleAddAsset() }}>
+                                    <Text style={{ color: 'white', fontSize: 16 }}>+</Text>
+                                </TouchableOpacity>
                             </View>
-                            <View style={{ flex: 1, flexDirection: 'row' }}>
-                                <Icon name='heartbeat' type='font-awesome' color='#f50' />
-                                <InputField
-                                    label="Units Consumed"
-                                    labelStyle={styles.fieldTitle}
-                                    name="unitsConsumed"
-                                    keyboardType="numeric"
-                                    placeholder="Units Consumed"
-                                    value={values.unitsConsumed}
-                                    onChange={setFieldValue}
-                                    onTouch={setFieldTouched}
-                                    error={touched.unitsConsumed && errors.unitsConsumed}
-                                />
-                            </View>
-
                         </View>
+                    </React.Fragment>
+                </KeyboardAvoidingView>
 
-                        <View style={{ justifyContent: 'center', alignItems: 'center', padding: 12 }}>
-                            {this.state.assets.length? this.state.assets.map((asset, idx) => (
-                                <View key={idx} style={{ flexDirection: 'row', padding: 5, justifyContent: 'space-between' }}>
-                                    <Text>{`Asset #${idx + 1}`}</Text>
-                                    <View style={styles.fieldContainer}>
-                                        <TextInput
-                                            placeholder={`device`}
-                                            onChangeText={(text) => { this.handleAssetDeviceChange(idx, text) }}
-                                        />
-                                    </View>
-                                    <View style={styles.fieldContainer}>
-                                        <TextInput
-                                            placeholder={` company`}
-                                            onChangeText={(text) => { this.handleAssetCompanyChange(idx, text) }}
-                                        />
-                                    </View>
-                                    <View style={styles.fieldContainer}>
-                                        <TextInput
-                                            placeholder={` power`}
-                                            keyboardType='numeric'
-                                            onChangeText={(text) => { this.handleAssetPowerChange(idx, parseFloat(text)) }}
-                                        />
-                                    </View>
-
-                                    <TouchableOpacity style={styles.deleteButton} onPress={() => { this.handleRemoveAsset(idx) }}>
-                                        <Text style={{ color: 'white', fontSize: 16 }}>-</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ))
-                        : <Text style={styles.fieldTitle}> Tap to Add Assets </Text>}
-                            <TouchableOpacity style={styles.addButton} onPress={() => { this.handleAddAsset() }}>
-                                <Text style={{ color: 'white', fontSize: 16 }}>+</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={{ justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-                            <TouchableOpacity style={(!isValid || isSubmitting) ? styles.disabledButton : styles.button}
-                                disabled={!isValid || isSubmitting}
-                                onPress={handleSubmit} >
-                                <Text style={{ color: (!isValid || isSubmitting) ? 'darkgray' : 'white' }}> Next </Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </React.Fragment>
-            </KeyboardAwareScrollView>
+                <View style={{ justifyContent: 'flex-start', marginLeft: '75%' }}>
+                    <TouchableOpacity style={(!isValid || isSubmitting) ? styles.disabledButton : styles.button}
+                        // disabled={!isValid || isSubmitting}
+                        onPress={handleSubmit} >
+                        <Text style={{ fontSize: 16, color: (!isValid || isSubmitting) ? 'darkgray' : '#39F' }}> Next </Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
         );
     }
     render() {
         const backSign: String = "<-Home";
         return (
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1}}>
+                <Header />
                 {/* add or remove contents based on loading and error response from mutation  */}
                 {this.state.loading && (
                     <View style={styles.mutationResponse}>
@@ -303,12 +323,8 @@ class CreateBill extends React.Component<any, any>  {
                         />
                     </View>
                 )}
-                <Header placement="left"
-                    leftComponent={{ icon: 'home', color: '#fff', onPress: () => this.props.history.push('/') }}
-                    centerComponent={{ text: 'Create Bill', style: { color: '#fff' } }}
-                />
 
-                <View style={styles.container}>
+                <View style={Platform.OS=="web"?styles.webContainer: styles.container}>
 
                     <Formik
                         initialValues={{ title: '', site: '', unitRate: 0, unitsConsumed: 0 }}
@@ -320,11 +336,11 @@ class CreateBill extends React.Component<any, any>  {
                                 .required('title is required'),
                             unitRate: Yup
                                 .number()
-                                .positive()
+                                .positive('not positive')
                                 .required('required'),
                             unitsConsumed: Yup
                                 .number()
-                                .positive()
+                                .positive('not positive')
                                 .required('required')
                         })}
                     >
@@ -340,33 +356,51 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         margin: 10,
+        justifyContent: 'center',
+    },
+    webContainer:{
+        backgroundColor:'aliceblue',
+        width:"60%",
+        alignItems:'center',
+        marginLeft: 230,
+        padding: 10,
+        flex: 1,
+    },
+    titleContainer: {
+        padding: 10,
+    },
+    title: {
+        fontSize: 16,
+        color: '#212121'
     },
     button: {
         width: 120,
-        alignItems: 'center',
-        backgroundColor: 'dodgerblue',
         padding: 10,
-        borderRadius: 20,
-        textAlign: 'center',
-        margin: 10
+        margin: 10,
     },
     disabledButton: {
         width: 120,
-        alignItems: 'center',
-        backgroundColor: '#DDDDDD',
         padding: 10,
-        borderRadius: 20,
-        textAlign: 'center',
-        margin: 10
+        margin: 10,
     },
     fieldContainer: {
-        borderBottomColor: 'dodgerblue',
+        borderBottomColor: '#39F',
         borderBottomWidth: 1,
         flex: 1,
     },
     fieldTitle: {
+        fontSize: 12,
+        color: '#39F',
+        marginLeft: 30,
+        marginBottom: -5
+    },
+    textInfo: {
         fontSize: 10,
-        color: 'dodgerblue',
+        color: 'darkgrey'
+    },
+    assetPrompt: {
+        fontSize: 12,
+        color: '#39F',
     },
     field: {
         height: 60,
@@ -375,33 +409,26 @@ const styles = StyleSheet.create({
         fontSize: 16
     },
     assetField: {
-        margin: 5,
+        width: 80,
     },
     deleteButton: {
-        backgroundColor: '#EA7B55',
+        backgroundColor: '#39F',
         borderRadius: 20,
-        color: 'white',
-        fontSize: 24,
-        fontWeight: 'bold',
         overflow: 'hidden',
         padding: 5,
         alignItems: 'center',
         justifyContent: 'center',
-        textAlign: 'center',
         width: 40, height: 40,
     },
     addButton: {
-        backgroundColor: '#9DF359',
+        backgroundColor: '#39F',
         borderRadius: 20,
-        color: 'white',
-        fontSize: 24,
-        fontWeight: 'bold',
         overflow: 'hidden',
         padding: 5,
         alignItems: 'center',
         justifyContent: 'center',
-        textAlign: 'center',
         width: 40, height: 40,
+        marginTop: 5
     },
     mutationResponse: {
         backgroundColor: 'lightgray',
