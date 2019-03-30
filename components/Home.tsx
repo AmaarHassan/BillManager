@@ -6,7 +6,7 @@ export default class Home extends React.Component<any, any>  {
     render() {
         return (
             <View style={styles.container}>
-                    <Header />
+                    <Header/>
 
                     <Image style={styles.bodyImage} source={require('../assets/BillManager_HomeScreen.png')} />
 
