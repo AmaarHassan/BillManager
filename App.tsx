@@ -1,6 +1,6 @@
 import React from 'react';
 import { Component } from 'react';
-import { StyleSheet, Text, View, Button } from 'react-native';
+import { StyleSheet, Text, View, Button, AppRegistry } from 'react-native';
 import { Route, MemoryRouter, Switch } from 'react-router';
 import { ApolloClient, HttpLink, InMemoryCache } from 'apollo-boost';
 import { ApolloProvider } from 'react-apollo';
@@ -16,7 +16,6 @@ const client = new ApolloClient({
   }),
   cache: new InMemoryCache()
 });
-
 
 export default class App extends React.Component {
   render() {
@@ -34,13 +33,4 @@ export default class App extends React.Component {
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
-
-//AppRegistry.registerComponent('BillManager', () => App);
+AppRegistry.registerComponent('BillManager', () => App);

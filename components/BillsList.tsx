@@ -76,7 +76,7 @@ class BillsList extends React.Component<any, any>  {
 
     render() {
         return (
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, backgroundColor: '#ecf0f1', }}>
                <Header/>
                 <View style={styles.container}>
                     {this.displayBills()}
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: '#ecf0f1',
         padding: 8,
-        width:'100%'
+        marginLeft: Platform.OS=="web"? "3%" : 0,
     }
 });
 

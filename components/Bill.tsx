@@ -1,5 +1,8 @@
 import React from 'react';
-import { Modal, FlatList, StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Platform, Alert } from 'react-native';
+import {
+    Modal, FlatList, StyleSheet, Text, View,
+    TouchableOpacity, ActivityIndicator, Platform, Image
+} from 'react-native';
 // import { Card, Icon } from "react-native-elements";
 
 import Asset from './interfaces/Asset';
@@ -22,16 +25,16 @@ export default class Bill extends React.Component<any, any>  {
                     renderItem={({ item }) => {
                         return (
                             <View style={styles.modalInside}>
-                                <Text style={styles.description}> {item.device.toUpperCase()} </Text>
-                                <Text style={styles.description}> {item.company.toUpperCase()} </Text>
-                                <Text style={styles.description}> {item.power} </Text>
+                                <Text style={styles.modalDescription}> {item.device.toUpperCase()} </Text>
+                                <Text style={styles.modalDescription}> {item.company.toUpperCase()} </Text>
+                                <Text style={styles.modalDescription}> {item.power} </Text>
                             </View>
                         );
                     }}
                     keyExtractor={(item, index) => index.toString()}
                 />
             )
-        } else return (<Text>Nothing to show </Text>)
+        } else return (<Text style={{ marginTop: 200, marginBottom: 200 }}>No Assets Found </Text>)
     }
     setModalVisible(visible: boolean) {
         this.setState({ modalVisible: visible });
@@ -42,11 +45,6 @@ export default class Bill extends React.Component<any, any>  {
                 <Modal
                     transparent={true}
                     visible={this.state.modalVisible}
-                    //style={{ visible: false }}
-                    //backdropOpacity={0.3}
-                    //swipeDirection="left"
-                    //onSwipe={() => { this.setModalVisible(!this.state.modalVisible) }}
-                    //onBackdropPress={() => { this.setModalVisible(!this.state.modalVisible) }}
                     onRequestClose={() => console.log('closed')}
                 >
                     <TouchableOpacity
@@ -58,7 +56,7 @@ export default class Bill extends React.Component<any, any>  {
                             <Text style={styles.modalTitle}> Assets </Text>
                             {this.showAssets(this.props.bill.assets)}
                         </View>
-                        <Text style={{ color: 'dodgerblue', marginTop: -20 }}> Tap to Close </Text>
+                        <Text style={styles.modalCloseText}> Tap to Close </Text>
                     </TouchableOpacity>
                 </Modal>
             )
@@ -95,22 +93,20 @@ export default class Bill extends React.Component<any, any>  {
                             : alert(JSON.stringify(this.props.bill.assets))
                     }} >
                     {this.showModal(Platform.OS)}
-                    <View style={{ padding: 5, margin: 5, height: 100 }}>
-                        <Text style={styles.bodyText}>{this.props.bill.title}</Text>
-                        <Text style={styles.bodyText}>
+                    <View style={styles.cardBody}>
+                        <Text style={styles.cardBodyText}>{this.props.bill.title}</Text>
+                        <Text style={styles.cardBodyText}>
                             {this.addCommas(this.props.bill.unitRate * this.props.bill.unitsConsumed).toString()}
                         </Text>
                     </View>
 
-                    <View style={styles.tail}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.tailText}> Lorem Ipsum Dolor </Text>
+                    <View style={styles.cardTail}>
+                        <View style={ styles.tailDescriptionTextContainer }>
+                            <Text style={styles.cardTailText}> Lorem Ipsum </Text>
                         </View>
-                        <View style={{ flex: 1, padding: 5, marginLeft: -7, flexDirection: 'row', margin: 0 }}>
-                            {/* <Icon name='watch' color='#00aced' /> */}
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.tailText}>{this.props.bill.month.toString()}</Text>
-                            </View>
+                        <View style={styles.tailIconMonthContainer}>
+                            <Image style={styles.tailIcon} source={require('../assets/icons/clock.png')} />
+                            <Text style={styles.cardTailText}>{this.props.bill.month.toString()}</Text>
                         </View>
                     </View>
                 </TouchableOpacity>
@@ -131,25 +127,48 @@ const styles = StyleSheet.create({
         padding: 0,
         borderRadius: 10,
         backgroundColor: '#39F',
-        width: Platform.OS == 'web' ? 250 : 'auto'
+        maxWidth: Platform.OS == 'web' ? 200 : 140
     },
-    Webcard: {
-        margin: 15,
-        width: 250,
-        padding: 0,
-        borderRadius: 10,
-        backgroundColor: '#39F',
+    cardBody: {
+        padding: 5,
+        margin: 5,
+        height: 100
     },
-    tail: {
+    cardBodyText: {
+        color: 'white'
+    },
+    cardTail: {
         flex: 1,
         backgroundColor: '#90caf9',
         padding: 5,
+        justifyContent:'center'
     },
-    bodyText: {
-        color: 'white'
+    tailIconTextContainer: {
+        flex: 1,
+        padding: 5,
+        marginLeft: -7,
+        flexDirection: 'row',
+        margin: 0
     },
-    tailText: {
-        color: 'white'
+    cardTailText: {
+        color: 'white',
+        marginLeft: 5,
+        marginTop:-2
+    },
+    tailDescriptionTextContainer:{
+        flex: 1,
+        padding: 5 , 
+        marginLeft:-6
+    },
+    tailIconMonthContainer:{
+        marginLeft: 5, 
+        flexDirection: 'row',
+        paddingBottom:8
+    },
+    tailIcon: {
+        height: 15,
+        width: 15,
+        padding: 5,
     },
     titleStyle: {
         fontSize: 16,
@@ -172,7 +191,7 @@ const styles = StyleSheet.create({
         marginVertical: 80,
         flex: 1
     },
-    description: {
+    modalDescription: {
         padding: 10,
         fontSize: 12,
         width: 100
@@ -183,13 +202,9 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         borderColor: 'pink'
     },
-    button: {
-        width: 120,
-        alignItems: 'center',
-        backgroundColor: '#DDDDDD',
-        padding: 10,
-        borderRadius: 20,
-        margin: 10,
+    modalCloseText: {
+        color: 'dodgerblue',
+        marginTop: -20
     },
     modalTitle: {
         fontSize: 16,

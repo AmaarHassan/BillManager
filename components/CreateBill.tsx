@@ -2,16 +2,13 @@ import React from 'react';
 import {
     StyleSheet, Text, Image, View, TextInput, Picker, TouchableOpacity, ScrollView, KeyboardAvoidingView
 } from 'react-native';
-import { Alert, ActivityIndicator } from 'react-native';
-//import { Header, Icon, Input, Divider } from 'react-native-elements';
-
-import { compose, graphql } from 'react-apollo';
+import { ActivityIndicator } from 'react-native';
 import { BackHandler, Platform } from 'react-native';
-import Asset from './interfaces/IBill';
 import Header from './header';
+
+import { graphql } from 'react-apollo';
 //import mutation query from queries
 import { getBillsQuery, addBillMutation } from './queries/queries';
-//import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 
@@ -95,7 +92,7 @@ class CreateBill extends React.Component<any, any>  {
     //adding and removing assets object(s)
     handleAddAsset = () => {
         this.setState({
-            assets: this.state.assets.concat([{ device: "" }])
+            assets: this.state.assets.concat([{ device: "", company: "", power: null }])
         });
     };
     handleRemoveAsset = (idx: number) => {
@@ -103,6 +100,13 @@ class CreateBill extends React.Component<any, any>  {
             assets: this.state.assets.filter((asset, assetIdx) => idx != assetIdx)
         });
     };
+    filterAssets = () => {
+        let assets = [...this.state.assets];
+        let newAssets = assets.filter(asset => {
+            return (asset.device!="" && asset.company!="" && asset.power!=null)
+        })
+        this.setState({ assets: newAssets });
+    }
 
     submitMutation = () => {
         return this.props.mutate({
@@ -120,6 +124,7 @@ class CreateBill extends React.Component<any, any>  {
 
     _handleSubmit = async (values: any, bag: any) => {
         //setting values here, when form is already validated by yup in formika
+        this.filterAssets();
         this.setState({
             title: values.title,
             unitRate: parseFloat(values.unitRate),
@@ -150,201 +155,202 @@ class CreateBill extends React.Component<any, any>  {
         }
     }
 
-    renderForm = (formikProps) => {
+    renderForm = (formikProps: any) => {
         const {
             values, handleSubmit, handleBlur, handleChange, setFieldValue, errors,
             touched, setFieldTouched, isValid, isSubmitting
         } = formikProps;
 
         return (
+
             <View style={{ flex: 1 }}>
-                <KeyboardAvoidingView
-                    behavior="position"
-                    enabled={true}
-                >
-                    <React.Fragment>
-                        <View style={styles.mainContainer}>
-                            {/* {this.showTitleForWeb} */}
-                            {/* first row of title */}
-                            <View style={{ marginLeft: Platform.OS == "web" ? - 11 : 0, justifyContent: Platform.OS == "web" ? 'space-evenly' : 'space-between' }}>
-                                <View>
-                                    <Text style={styles.fieldTitle}> Title * </Text>
-                                </View>
-                                <View style={{ flexDirection: 'row' }}>
-                                    <Image style={styles.icon} source={require('../assets/icons/title.png')} />
-                                    <TextInput style={styles.input} placeholder="title goes here"
-                                        onChangeText={handleChange('title')}
-                                        onBlur={handleBlur('title')}
-                                    />
-                                </View>
-                                <Text style={
-                                    (touched.title && errors.title) ? styles.errorTextInfo : styles.textInfo
-                                }>
-                                    {(touched.title && errors.title) ? touched.title && errors.title : "Required"}
-                                </Text>
-                            </View>
-
-                            {/* second row of form fileds: Pickers for Site and Month */}
-                            <View style={{ marginLeft: Platform.OS == "web" ? -71 : 0, marginTop: Platform.OS == "web" ? 0 : 0 }}>
-                                <View style={{
-                                    flexDirection: 'row',
-                                    marginTop: Platform.OS == "web" ? 0 : 15
-                                }}>
-
-                                    <View style={styles.rowContainer}>
-                                        <View style={styles.innerRow}>
-                                            <View style={{ marginLeft: Platform.OS != "web" ? 3 : 0, marginBottom: Platform.OS != "web" ? -5 : 0 }}>
-                                                <Text style={styles.fieldTitle}> Site  </Text>
-                                            </View>
-                                            <View style={{ flexDirection: 'row', padding: 0, margin: 0, alignItems: 'center' }}>
-                                                <Image style={{ height: 25, width: 20 }} source={require('../assets/icons/site.png')} />
-                                                <View style={{ width: 110, marginLeft: Platform.OS == "web" ? 12 : 9 }}>
-                                                    <Picker selectedValue={this.state.site} onValueChange={
-                                                        (itemValue, itemIndex) => {
-                                                            this.setState({ site: itemValue });
-                                                        }
-                                                    }>
-                                                        <Picker.Item label="Home" value="Home" />
-                                                        <Picker.Item label="Office" value="Office" />
-                                                    </Picker>
-                                                </View>
-                                            </View>
-                                        </View>
-                                    </View>
-
-                                    <View style={{ marginTop: Platform.OS == "web" ? 20 : 0 }}>
-                                        <View>
-                                            <View style={{ marginBottom: Platform.OS != "web" ? -5 : 0 }}>
-                                                <Text style={styles.fieldTitle}> Month </Text>
-                                            </View>
-                                            <View style={{ flexDirection: 'row', padding: 0, margin: 0, alignItems: 'center' }}>
-                                                <Image style={styles.icon} source={require('../assets/icons/calendar.png')} />
-                                                <View style={{ width: 130, marginLeft: Platform.OS == "web" ? 12 : 8 }}>
-                                                    <Picker selectedValue={this.state.month} onValueChange={(itemValue, itemIndex) =>
-                                                        this.setState({ month: itemValue })
-                                                    }>
-                                                        <Picker.Item label="January" value="January" />
-                                                        <Picker.Item label="February" value="February" />
-                                                        <Picker.Item label="March" value="March" />
-                                                        <Picker.Item label="April" value="April" />
-                                                        <Picker.Item label="May" value="May" />
-                                                        <Picker.Item label="June" value="June" />
-                                                        <Picker.Item label="July" value="July" />
-                                                        <Picker.Item label="August" value="August" />
-                                                        <Picker.Item label="September" value="September" />
-                                                        <Picker.Item label="October" value="October" />
-                                                        <Picker.Item label="November" value="November" />
-                                                        <Picker.Item label="December" value="December" />
-                                                    </Picker>
-                                                </View>
-                                            </View>
-                                        </View>
-                                    </View>
-                                </View>
-                            </View>
-
-                            {/* Third row of unit rate and units consumed */}
-                            <View style={{ flexDirection: 'row', marginLeft: Platform.OS == "web" ? -3 : 0, marginTop: Platform.OS != "web" ? 15 : 30 }}>
-                                <View style={{ width: '40%', marginLeft: Platform.OS == "web" ? -10 : 0 }}>
+                <ScrollView>
+                    <KeyboardAvoidingView
+                        behavior="position"
+                        enabled={true}
+                    >
+                        <React.Fragment>
+                            <View style={styles.mainContainer}>
+                                {/* {this.showTitleForWeb} */}
+                                {/* first row of title */}
+                                <View style={styles.firstRow}>
                                     <View>
-                                        <Text style={styles.fieldTitle}> Unit Rate *</Text>
-                                    </View>
-                                    <View style={{ flexDirection: 'row', }}>
-                                        <Image style={styles.icon} source={require('../assets/icons/unit.png')} />
-                                        <TextInput keyboardType='numeric'
-                                            value={values.unitRate.toString()}
-                                            style={{
-                                                padding: Platform.OS == "web" ? 5 : 2,
-                                                marginLeft: Platform.OS == "web" ? 11 : 13,
-                                                width: Platform.OS == "web" ? "50%" : "67%"
-                                            }}
-                                            placeholder="unit rate"
-                                            onChangeText={handleChange('unitRate')}
-                                            onBlur={handleBlur('unitRate')}
-                                        />
-                                    </View>
-                                    <Text style={
-                                        (touched.unitRate && errors.unitRate) ? styles.errorTextInfo : styles.textInfo
-                                    }>
-                                        {(touched.unitRate && errors.unitRate) ? touched.unitRate && errors.unitRate : "Required"}
-                                    </Text>
-                                </View>
-
-                                <View style={{ width: '53%', marginLeft: Platform.OS == "web" ? 17 : 26 }}>
-                                    <View>
-                                        <Text style={styles.fieldTitle}> Units Consumed *</Text>
+                                        <Text style={styles.fieldTitle}> Title * </Text>
                                     </View>
                                     <View style={{ flexDirection: 'row' }}>
-                                        <Image style={styles.icon} source={require('../assets/icons/unitsConsumed.png')} />
+                                        <Image style={styles.icon} source={require('../assets/icons/title.png')} />
                                         <TextInput
-                                            value={values.unitsConsumed.toString()}
-                                            keyboardType='numeric'
-                                            style={{
-                                                padding: Platform.OS == "web" ? 5 : 2,
-                                                marginLeft: Platform.OS == "web" ? 5 : 13,
-                                                width: Platform.OS != "web" ? "67%" : "50%"
-                                            }} placeholder="units consumed"
-                                            onChangeText={handleChange('unitsConsumed')}
-                                            onBlur={handleBlur('unitsConsumed')}
+                                            style={styles.input}
+                                            value={values.title}
+                                            placeholder="title goes here"
+                                            onChangeText={handleChange('title')}
+                                            onBlur={handleBlur('title')}
                                         />
                                     </View>
                                     <Text style={
-                                        (touched.unitsConsumed && errors.unitsConsumed) ? styles.errorTextInfo : styles.textInfo
+                                        (touched.title && errors.title) ? styles.errorTextInfo : styles.textInfo
                                     }>
-                                        {(touched.unitsConsumed && errors.unitsConsumed) ? touched.unitsConsumed && errors.unitsConsumed : "Required"}
+                                        {(touched.title && errors.title) ? touched.title && errors.title : "Required"}
                                     </Text>
                                 </View>
 
-                            </View>
+                                {/* second row of form fileds: Pickers for Site and Month */}
+                                <View style={styles.secondRowContainer}>
+                                    <View style={styles.secondRow}>
 
-                            {/* fourth row of dynamimc assets */}
-                            <View style={{ alignItems: 'center', marginTop: 20, marginLeft: Platform.OS == "web" ? '-20%' : 0 }}>
-                                {this.state.assets.length ? this.state.assets.map((asset, idx) => (
-                                    <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, padding: 5 }}>
-                                        <Text style={{ color: '#39F' }}>{`Asset #${idx + 1}`}</Text>
-                                        <View style={styles.assetField}>
-                                            <TextInput
-                                                placeholder={`device`}
-                                                onChangeText={(text) => { this.handleAssetDeviceChange(idx, text) }}
-                                            />
-                                        </View>
-                                        <View style={styles.assetField}>
-                                            <TextInput
-                                                placeholder={` company`}
-                                                onChangeText={(text) => { this.handleAssetCompanyChange(idx, text) }}
-                                            />
-                                        </View>
-                                        <View style={styles.assetField}>
-                                            <TextInput
-                                                placeholder={` power`}
-                                                keyboardType='numeric'
-                                                onChangeText={(text) => { this.handleAssetPowerChange(idx, parseFloat(text)) }}
-                                            />
+                                        <View style={styles.rowContainer}>
+                                            <View style={styles.innerRow}>
+                                                <View style={styles.siteContainer}>
+                                                    <Text style={styles.fieldTitle}> Site  </Text>
+                                                </View>
+                                                <View style={styles.siteIconContainer}>
+                                                    <Image style={styles.siteIcon} source={require('../assets/icons/site.png')} />
+                                                    <View style={styles.sitePickerContainer}>
+                                                        <Picker
+                                                            selectedValue={this.state.site}
+                                                            onValueChange={
+                                                                (itemValue, itemIndex) => {
+                                                                    this.setState({ site: itemValue });
+                                                                }
+                                                            }>
+                                                            <Picker.Item label="Home" value="Home" />
+                                                            <Picker.Item label="Office" value="Office" />
+                                                        </Picker>
+                                                    </View>
+                                                </View>
+                                            </View>
                                         </View>
 
-                                        <TouchableOpacity style={styles.deleteButton} onPress={() => { this.handleRemoveAsset(idx) }}>
-                                            <Text style={{ color: 'white', fontSize: 16 }}>-</Text>
-                                        </TouchableOpacity>
+                                        <View style={styles.monthContainer}>
+                                            <View>
+                                                <View style={styles.monthRow}>
+                                                    <Text style={styles.fieldTitle}> Month </Text>
+                                                </View>
+                                                <View style={styles.monthIconPicker}>
+                                                    <Image style={styles.icon} source={require('../assets/icons/calendar.png')} />
+                                                    <View style={styles.monthPickerContainer}>
+                                                        <Picker selectedValue={this.state.month} onValueChange={(itemValue, itemIndex) =>
+                                                            this.setState({ month: itemValue })
+                                                        }>
+                                                            <Picker.Item label="January" value="January" />
+                                                            <Picker.Item label="February" value="February" />
+                                                            <Picker.Item label="March" value="March" />
+                                                            <Picker.Item label="April" value="April" />
+                                                            <Picker.Item label="May" value="May" />
+                                                            <Picker.Item label="June" value="June" />
+                                                            <Picker.Item label="July" value="July" />
+                                                            <Picker.Item label="August" value="August" />
+                                                            <Picker.Item label="September" value="September" />
+                                                            <Picker.Item label="October" value="October" />
+                                                            <Picker.Item label="November" value="November" />
+                                                            <Picker.Item label="December" value="December" />
+                                                        </Picker>
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        </View>
                                     </View>
-                                ))
-                                    : <Text style={styles.assetPrompt}>Tap to Add Assets</Text> //else show text
-                                }
-                                <TouchableOpacity style={styles.addButton} onPress={() => { this.handleAddAsset() }}>
-                                    <Text style={{ color: 'white', fontSize: 16 }}>+</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </React.Fragment>
-                </KeyboardAvoidingView>
+                                </View>
 
-                <View style={{ justifyContent: 'flex-start', marginLeft: '75%' }}>
-                    <TouchableOpacity style={(!isValid || isSubmitting) ? styles.disabledButton : styles.button}
-                        // disabled={!isValid || isSubmitting}
-                        onPress={handleSubmit} >
-                        <Text style={{ fontSize: 16, color: (!isValid || isSubmitting) ? 'darkgray' : '#39F' }}> Next </Text>
-                    </TouchableOpacity>
+                                {/* Third row of unit rate and units consumed */}
+                                <View style={styles.thirdRowContainer}>
+                                    <View style={styles.thirdRowRate}>
+                                        <View>
+                                            <Text style={styles.fieldTitle}> Unit Rate *</Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', }}>
+                                            <Image style={styles.icon} source={require('../assets/icons/unit.png')} />
+                                            <TextInput keyboardType='numeric'
+                                                value={values.unitRate.toString()}
+                                                style={styles.unitRate}
+                                                placeholder="unit rate"
+                                                onChangeText={handleChange('unitRate')}
+                                                onBlur={handleBlur('unitRate')}
+                                            />
+                                        </View>
+                                        <Text style={
+                                            (touched.unitRate && errors.unitRate) ? styles.errorTextInfo : styles.textInfo
+                                        }>
+                                            {(touched.unitRate && errors.unitRate) ? touched.unitRate && errors.unitRate : "Required"}
+                                        </Text>
+                                    </View>
+
+                                    <View style={styles.thirdRowConsumed}>
+                                        <View>
+                                            <Text style={styles.fieldTitle}> Units Consumed *</Text>
+                                        </View>
+                                        <View style={styles.consumedIconInputContainer}>
+                                            <Image style={styles.icon} source={require('../assets/icons/unitsConsumed.png')} />
+                                            <TextInput
+                                                value={values.unitsConsumed.toString()}
+                                                keyboardType='numeric'
+                                                style={styles.unitsConsumed}
+                                                placeholder="units consumed"
+                                                onChangeText={handleChange('unitsConsumed')}
+                                                onBlur={handleBlur('unitsConsumed')}
+                                            />
+                                        </View>
+                                        <Text style={
+                                            (touched.unitsConsumed && errors.unitsConsumed) ? styles.errorTextInfo : styles.textInfo
+                                        }>
+                                            {(touched.unitsConsumed && errors.unitsConsumed) ? touched.unitsConsumed && errors.unitsConsumed : "Required"}
+                                        </Text>
+                                    </View>
+
+                                </View>
+
+                                {/* fourth row of dynamimc assets */}
+                                <View style={styles.fourthRowContainer}>
+                                    {this.state.assets.length ? this.state.assets.map((asset, idx) => (
+                                        <View key={idx} style={styles.assetRow}>
+                                            <Text style={styles.assetText}>{`Asset #${idx + 1} `}</Text>
+                                            <View style={styles.assetField}>
+                                                <TextInput
+                                                    placeholder={`device`}
+                                                    onChangeText={(text) => { this.handleAssetDeviceChange(idx, text) }}
+                                                />
+                                            </View>
+                                            <View style={styles.assetField}>
+                                                <TextInput
+                                                    placeholder={`company`}
+                                                    onChangeText={(text) => { this.handleAssetCompanyChange(idx, text) }}
+                                                />
+                                            </View>
+                                            <View style={styles.assetField}>
+                                                <TextInput
+                                                    placeholder={`power`}
+                                                    keyboardType='numeric'
+                                                    onChangeText={(text) => { this.handleAssetPowerChange(idx, parseFloat(text)) }}
+                                                />
+                                            </View>
+
+                                            <TouchableOpacity style={styles.deleteButton} onPress={() => { this.handleRemoveAsset(idx) }}>
+                                                <Text style={{ color: 'white', fontSize: 16 }}>-</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))
+                                        : <Text style={styles.assetPrompt}>Tap to Add Assets</Text>
+                                    }
+                                    <TouchableOpacity style={styles.addButton} onPress={() => { this.handleAddAsset() }}>
+                                        <Text style={{ color: 'white', fontSize: 16 }}>+</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </React.Fragment>
+                    </KeyboardAvoidingView>
+                </ScrollView>
+
+                <View style={styles.bottomDivider}>
+                    <View style={{ justifyContent: 'flex-start', marginTop: '0%', marginLeft: '75%' }}>
+                        <TouchableOpacity
+                            style={(!isValid || isSubmitting) ? styles.disabledButton : styles.button}
+                            disabled={!isValid || isSubmitting}
+                            onPress={handleSubmit} >
+                            <Text style={{ fontSize: 16, color: (!isValid || isSubmitting) ? 'darkgray' : '#39F' }}> Next </Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
+            </View >
         );
     }
     render() {
@@ -366,7 +372,7 @@ class CreateBill extends React.Component<any, any>  {
                 <View style={Platform.OS == "web" ? styles.webContainer : styles.container}>
 
                     <Formik
-                        initialValues={{ title: '', site: '', unitRate: 0, unitsConsumed: 0 }}
+                        initialValues={{ title: '', unitRate: 0, unitsConsumed: 0 }}
                         onSubmit={this._handleSubmit}
                         render={this.renderForm}
                         validationSchema={Yup.object().shape({
@@ -427,6 +433,98 @@ const styles = StyleSheet.create({
         marginTop: Platform.OS == "web" ? 20 : 0,
         marginLeft: Platform.OS == "web" ? -0.5 : 0
     },
+    firstRow: {
+        marginLeft: Platform.OS == "web" ? - 11 : 0,
+        justifyContent: Platform.OS == "web" ? 'space-evenly' : 'space-between'
+    },
+    secondRowContainer: {
+        marginLeft: Platform.OS == "web" ? '-14.7%' : 0,
+        marginTop: Platform.OS == "web" ? 0 : 0
+    },
+    secondRow: {
+        flexDirection: 'row',
+        marginTop: Platform.OS == "web" ? 0 : 15
+    },
+    siteContainer: {
+        marginLeft: Platform.OS != "web" ? 3 : 0,
+        marginBottom: Platform.OS != "web" ? -5 : 0
+    },
+    siteIconContainer: {
+        flexDirection: 'row',
+        padding: 0,
+        margin: 0,
+        alignItems: 'center'
+    },
+    siteIcon: {
+        height: 25,
+        width: 20
+    },
+    sitePickerContainer: {
+        width: 110,
+        marginLeft: Platform.OS == "web" ? 12 : 9
+    },
+    monthContainer: {
+        marginTop: Platform.OS == "web" ? 20 : 0,
+        marginLeft: Platform.OS == "web" ? 0 : 20,
+    },
+    monthRow: {
+        marginBottom: Platform.OS != "web" ? -5 : 0
+    },
+    monthIconPicker: {
+        flexDirection: 'row',
+        padding: 0,
+        margin: 0,
+        alignItems: 'center'
+    },
+    monthPickerContainer: {
+        width: 130,
+        marginLeft: Platform.OS == "web" ? 12 : 8
+    },
+    thirdRowContainer: {
+        flexDirection: 'row',
+        marginTop: Platform.OS != "web" ? 15 : 30,
+    },
+    thirdRowRate: {
+        width: '40%',
+        marginLeft: Platform.OS == "web" ? -10 : 0
+    },
+    unitRate: {
+        padding: Platform.OS == "web" ? 5 : 2,
+        marginLeft: Platform.OS == "web" ? 9 : 13,
+        width: Platform.OS == "web" ? "50%" : "67%"
+    },
+    thirdRowConsumed: {
+        width: '53%',
+        marginLeft: Platform.OS == "web" ? 18 : 47,
+    },
+    consumedIconInputContainer: {
+        flexDirection: 'row'
+    },
+    unitsConsumed: {
+        padding: Platform.OS == "web" ? 5 : 2,
+        marginLeft: Platform.OS == "web" ? 7 : 13,
+        width: Platform.OS != "web" ? "75%" : "50%"
+    },
+    fourthRowContainer: {
+        alignItems: 'center',
+        width: Platform.OS != "web" ? '80%' : 'auto',
+        marginTop: 20,
+        marginLeft: Platform.OS == "web" ? '-27%' : '10%'
+    },
+    assetRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginLeft: Platform.OS == "web" ? '5%' : '0%',
+        marginTop: 10,
+        padding: 5
+    },
+    assetField: {
+        width: Platform.OS == "web" ? 86 : 70,
+    },
+    assetText: {
+        color: '#39F'
+    },
     title: {
         fontSize: 16,
         color: '#212121'
@@ -476,6 +574,7 @@ const styles = StyleSheet.create({
     assetPrompt: {
         fontSize: 12,
         color: '#39F',
+        marginTop: Platform.OS == "web" ? "1.7%" : 0
     },
     field: {
         height: 60,
@@ -483,9 +582,7 @@ const styles = StyleSheet.create({
         padding: 2,
         fontSize: 16
     },
-    assetField: {
-        width: 80,
-    },
+
     deleteButton: {
         backgroundColor: '#39F',
         borderRadius: 20,
@@ -511,6 +608,15 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
         justifyContent: 'center'
+    },
+    bottomDivider: {
+        width: Platform.OS == "web" ? '77%' : '100%',
+        marginTop: Platform.OS == "web" ? '6%' : '0%',
+        borderWidth: 1,
+        borderTopColor: '#39F',
+        borderLeftColor: 'white',
+        borderBottomColor: 'white',
+        borderRightColor: 'white',
     }
 });
 
