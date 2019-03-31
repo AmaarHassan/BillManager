@@ -69,8 +69,8 @@ class CreateBill extends React.Component<any, any>  {
             unitRate: 0,
             unitsConsumed: 0,
             assets: [],
-            loading: false,
-            response: ''
+            response: "Record Added",
+            loading: false
         })
     }
     //handling changes on assets' properties
@@ -103,7 +103,7 @@ class CreateBill extends React.Component<any, any>  {
     filterAssets = () => {
         let assets = [...this.state.assets];
         let newAssets = assets.filter(asset => {
-            return (asset.device!="" && asset.company!="" && asset.power!=null)
+            return (asset.device != "" && asset.company != "" && asset.power != null)
         })
         this.setState({ assets: newAssets });
     }
@@ -136,15 +136,9 @@ class CreateBill extends React.Component<any, any>  {
             bag.setSubmitting(true);
             await this.submitMutation()
                 .then(({ data }) => {
-                    this.setState({
-                        response: "Record Added",
-                        loading: false
-                    });
-                    // clear the form
+                    this.resetState();
                     bag.resetForm();
                     bag.setSubmitting(false);
-                    // clear the state
-                    this.resetState();
                 }).catch((error) => {
                     this.setState({ loading: false });
                     bag.setSubmitting(false);
@@ -157,8 +151,8 @@ class CreateBill extends React.Component<any, any>  {
 
     renderForm = (formikProps: any) => {
         const {
-            values, handleSubmit, handleBlur, handleChange, setFieldValue, errors,
-            touched, setFieldTouched, isValid, isSubmitting
+            values, handleSubmit, handleBlur, handleChange, errors,
+            touched, isValid, isSubmitting
         } = formikProps;
 
         return (

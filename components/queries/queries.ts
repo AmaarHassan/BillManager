@@ -37,5 +37,4 @@ const addBillMutation = gql`
 // }
 // `;
 
-// // make query variables that take in parameters passed to this function
 export { getBillsQuery, addBillMutation }

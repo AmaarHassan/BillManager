@@ -14,7 +14,16 @@ const client = new ApolloClient({
   link: new HttpLink({
     uri: 'https://api-euwest.graphcms.com/v1/cjsusp5ar6mfy01ckiztobrxx/master'
   }),
-  cache: new InMemoryCache()
+  cache: new InMemoryCache(),
+  defaultOptions: {
+    watchQuery: {
+      fetchPolicy: 'cache-and-network', //looks at cache and then updates
+      errorPolicy: 'all'
+    },
+    mutate: {
+      errorPolicy: 'all'
+    }
+  }
 });
 
 export default class App extends React.Component {
